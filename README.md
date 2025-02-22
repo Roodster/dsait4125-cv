@@ -16,3 +16,15 @@
    ```git checkout -b <branch>```
 
    Depending on the impact of the change, please request review before accepting the pull request :).
+
+## Accreditation
+
+2d dataset:
+```latex
+@misc{dsprites17,
+author = {Loic Matthey and Irina Higgins and Demis Hassabis and Alexander Lerchner},
+title = {dSprites: Disentanglement testing Sprites dataset},
+howpublished= {https://github.com/deepmind/dsprites-dataset/},
+year = "2017",
+}
+```
