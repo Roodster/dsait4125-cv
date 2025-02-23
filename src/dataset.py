@@ -152,8 +152,10 @@ class DspritesDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        pivot_image = torch.tensor(self.pivot_image[idx], dtype=torch.float32)
-        varying_image = torch.tensor(self.images[idx], dtype=torch.float32)
+        p_img = self.pivot_image[idx]
+        v_img = self.images[idx]
+        pivot_image = torch.tensor(p_img.reshape(1,64,64), dtype=torch.float32)
+        varying_image = torch.tensor(v_img.reshape(1,64,64), dtype=torch.float32)
         return pivot_image, varying_image
 
 # ============================== UTILITIES ==============================

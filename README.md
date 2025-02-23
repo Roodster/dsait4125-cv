@@ -4,7 +4,7 @@
 1. Clone the repository
   ```git clone https://github.com/Roodster/dsait4125-cv.git```
 
-2. Setup virtual environment
+2. Setup virtual environment  
    ``` python -m venv .venv ```  
    ``` source .venv/bin/activate```  
    ``` pip install -r requirements.txt ```
