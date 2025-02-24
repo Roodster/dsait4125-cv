@@ -17,6 +17,13 @@
 
    Depending on the impact of the change, please request review before accepting the pull request :).
 
+4. Usage  
+   Before training, prepare the dataset.  
+   ```bash
+   cd ./src
+   python3 dataset.py
+```
+
 ## Accreditation
 
 2d dataset:
