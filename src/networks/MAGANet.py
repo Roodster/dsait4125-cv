@@ -16,7 +16,7 @@ class Encoder(nn.Module):
     def __init__(self, latent_dim=10):
         super(Encoder, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
+            nn.Conv2d(2, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU()
@@ -29,55 +29,146 @@ class Encoder(nn.Module):
             nn.Linear(256, latent_dim)
         )
 
-    def forward(self, x):
+    def forward(self, x1, x2):
+        x = torch.cat([x1, x2], dim=1)
         x = self.conv(x)
         x = x.view(x.size(0), -1)
         return self.fc(x)
 
-class TransformationModule(nn.Module):
-    def __init__(self, latent_dim=10):
+class ActNorm(nn.Module):
+    def __init__(self, num_channels):
         super().__init__()
-        self.fc = nn.Sequential(
-            nn.Linear(latent_dim * 2, 256),
+        self.log_scale = nn.Parameter(torch.zeros(1, num_channels, 1, 1))
+        self.bias = nn.Parameter(torch.zeros(1, num_channels, 1, 1))
+
+    def forward(self, x):
+        return x * torch.exp(self.log_scale) + self.bias
+
+class Invertible1x1Conv(nn.Module):
+    def __init__(self, num_channels):
+        super().__init__()
+        self.weight = nn.Parameter(torch.eye(num_channels).unsqueeze(2).unsqueeze(3))  # Identity matrix
+
+    def forward(self, x):
+        return nn.functional.conv2d(x, self.weight)
+
+class AdditiveCoupling(nn.Module):
+    def __init__(self, num_channels):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Conv2d(num_channels // 2, num_channels // 2, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.Linear(256, latent_dim)
+            nn.Conv2d(num_channels // 2, num_channels // 2, kernel_size=3, padding=1),
         )
 
-    def forward(self, z1, z2):
-        delta = torch.cat([z1, z2], dim=1)
-        return self.fc(delta)
+    def forward(self, x):
+        x1, x2 = x.chunk(2, dim=1)  # Split channels
+        x2 = x2 + self.net(x1)  # Add transformation
+        return torch.cat([x1, x2], dim=1)
 
-class Decoder(nn.Module):
-    def __init__(self, latent_dim=10, out_channels=1):
+class FlowStep(nn.Module):
+    def __init__(self, num_channels):
         super().__init__()
-        self.fc = nn.Linear(latent_dim, 128 * 8 * 8)
-        self.deconv = nn.Sequential(
-            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
-            nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1),
-            nn.ReLU(),
-            nn.ConvTranspose2d(32, out_channels, kernel_size=4, stride=2, padding=1),
-            nn.Sigmoid()
+        self.act_norm = ActNorm(num_channels)
+        self.inv_conv = Invertible1x1Conv(num_channels)
+        self.coupling = AdditiveCoupling(num_channels)
+
+    def forward(self, x):
+        x = self.act_norm(x)
+        x = self.inv_conv(x)
+        x = self.coupling(x)
+        return x
+
+class SqueezeLayer(nn.Module):
+    def forward(self, x):
+        B, C, H, W = x.shape
+        x = x.view(B, C, H // 2, 2, W // 2, 2)
+        x = x.permute(0, 1, 3, 5, 2, 4).reshape(B, C * 4, H // 2, W // 2)
+        return x
+
+class UnsqueezeLayer(nn.Module):
+    def forward(self, x):
+        B, C, H, W = x.shape
+
+        # Reshape channels to separate spatial factors
+        x = x.view(B, C // 4, 2, 2, H, W)
+
+        # Permute dimensions to correct order
+        x = x.permute(0, 1, 4, 2, 5, 3).contiguous()
+
+        # Reshape to expanded spatial size
+        x = x.view(B, C // 4, H * 2, W * 2)
+        return x
+
+
+class FlowModule(nn.Module):
+    def __init__(self, num_channels):
+        super().__init__()
+        self.squeeze = SqueezeLayer()
+        self.flow_steps = nn.Sequential(
+            FlowStep(num_channels * 4),
+            FlowStep(num_channels * 4),
+            FlowStep(num_channels * 4),
         )
 
-    def forward(self, z):
-        x = self.fc(z).view(-1, 128, 8, 8)
-        return self.deconv(x)
+    def forward(self, x):
+        x = self.squeeze(x)
+        x = self.flow_steps(x)
+        return x
+
+
+class FiLM(nn.Module):
+    """ Feature-wise Linear Modulation (FiLM) to apply a learned transformation based on z. """
+
+    def __init__(self, latent_dim, num_channels):
+        super().__init__()
+        self.fc_gamma = nn.Linear(latent_dim, num_channels)
+        self.fc_beta = nn.Linear(latent_dim, num_channels)
+
+    def forward(self, x, z):
+        """ Apply FiLM modulation: gamma(z) * x + beta(z) """
+        B, C, H, W = x.shape
+        gamma = self.fc_gamma(z).view(B, C, 1, 1)
+        beta = self.fc_beta(z).view(B, C, 1, 1)
+        return gamma * x + beta
+
+
+class FlowNet(nn.Module):
+    """ Decoder that learns the group action α: Z × X → X """
+
+    def __init__(self, num_channels, latent_dim):
+        super().__init__()
+        self.film = FiLM(latent_dim, num_channels)  # Modulate x1 using z
+
+        self.flow_modules = nn.Sequential(
+            FlowModule(num_channels),
+            FlowModule(num_channels * 4),
+            FlowModule(num_channels * 16),
+        )
+        self.unsqueeze = nn.Sequential(
+            UnsqueezeLayer(),
+            UnsqueezeLayer(),
+            UnsqueezeLayer(),
+        )
+
+    def forward(self, z, x1):
+        """ z: latent vector (B, latent_dim), x1: input image (B, 1, 64, 64) """
+        x1_transformed = self.film(x1, z)  # Apply FiLM transformation
+        x2 = self.flow_modules(x1_transformed)  # Apply flow-based transformations
+        x2 = self.unsqueeze(x2)
+        return torch.sigmoid(x2) # ensure intensity [0,1]
 
 
 class MAGANet(nn.Module):
     def __init__(self, in_channels=1, latent_dim=10):
         super().__init__()
         self.encoder = Encoder(latent_dim)
-        self.transform = TransformationModule(latent_dim)
-        self.decoder = Decoder(latent_dim, in_channels)
+        self.decoder = FlowNet(in_channels, latent_dim)
 
     def forward(self, x1, x2):
-        z1 = self.encoder(x1)
-        z2 = self.encoder(x2)
-        z_trans = self.transform(z1, z2)
-        x_transformed = self.decoder(z_trans)
-        return x_transformed
+        z = self.encoder(x1, x2)
+        generated_x2 = self.decoder(z, x1)  # Decoder generates x2 using z and x1
+        return generated_x2
 
 
 if __name__ == "__main__":
@@ -103,14 +194,13 @@ if __name__ == "__main__":
     loss_fn = nn.BCELoss()
 
     num_epochs = 50
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model.train()
     print("Start Training")
     for epoch in range(num_epochs):
         running_loss = 0.0
 
-        for batch_idx, (x1, x2) in enumerate(train_loader):  # Assuming `dataloader` is defined
+        for batch_idx, (x1, x2) in enumerate(train_loader):
             # x1np = x1.numpy()
             x1, x2 = x1.to(device), x2.to(device)  # Move tensors to GPU if available
 
@@ -126,3 +216,5 @@ if __name__ == "__main__":
 
         avg_loss = running_loss / len(train_loader)
         print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}")
+
+    torch.save(model.state_dict(), "../../outputs/magan_model.pth")
