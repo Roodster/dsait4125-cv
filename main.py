@@ -1,15 +1,17 @@
+import torch
 from torch.utils.data import DataLoader
 
 import torch.nn as nn
 import warnings
 warnings.filterwarnings('ignore')
-
+import matplotlib.pyplot as plt
 
 from src.args import Args
 from src.registry import setup
 from src.dataset import get_dataloaders, SyntheticDataset, DspritesDataset, get_dataloaders_2element
 from src.experiment import Experiment
 from src.common.utils import set_seed
+from src.networks.MAGANet import MAGANet
 
 def main():
         
@@ -25,14 +27,54 @@ def main():
     train_loader, test_loader = get_dataloaders_2element(train_data, test_data,
                                                 batch_size=args.batch_size)
 
-    # initialize experiment
-    experiment = Experiment(registry=registry, 
-                            args=args 
-                            )
-    
-    # run experiment
-    experiment.run(train_loader=train_loader, test_loader=test_loader)
 
+    model = MAGANet(in_channels=1, latent_dim=10)  # Reinitialize model
+    model.load_state_dict(torch.load("./outputs/magan_model.pth"))  # Load saved weights
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    model.eval()  # Set model to evaluation mode
+
+    loss_fn = nn.BCELoss()
+    running_loss = 0.0
+    print("start testing...")
+    generated_image = None
+    x1_sample = None  # Store x1 for visualization
+    x2_sample = None  # Store x2 for visualization
+    for batch_idx, (x1, x2) in enumerate(test_loader):
+        x1, x2 = x1.to(device), x2.to(device)  # Move tensors to GPU if available
+
+        x_transformed = model(x1, x2)  # Forward pass
+
+        loss = loss_fn(x_transformed, x2)  # Compute BCE loss
+
+        running_loss += loss.item()
+
+        if batch_idx == 3:
+            generated_image = x_transformed.cpu().detach().numpy().squeeze()
+            x1_sample = x1.cpu().detach().numpy().squeeze()
+            x2_sample = x2.cpu().detach().numpy().squeeze()
+    avg_loss = running_loss / len(test_loader)
+    print(f"Test average loss: {avg_loss}")
+    # Convert tensor to NumPy for visualization
+
+    # Display the generated image
+    if generated_image is not None:
+        fig, axes = plt.subplots(1, 3, figsize=(10, 4))
+
+        # Ensure grayscale images are displayed correctly
+        axes[0].imshow(x1_sample[0], cmap='gray')  # x1 sample
+        axes[0].set_title("Input Image (x1)-pivot")
+        axes[0].axis("off")
+
+        axes[1].imshow(x2_sample[0], cmap='gray')  # x2 sample (ground truth)
+        axes[1].set_title("Ground Truth (x2)-varying")
+        axes[1].axis("off")
+
+        axes[2].imshow(generated_image[0], cmap='gray')  # Generated x2
+        axes[2].set_title("Generated Image")
+        axes[2].axis("off")
+
+        plt.show()
 
 if __name__ == "__main__":
     main()

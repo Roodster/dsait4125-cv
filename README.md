@@ -22,7 +22,17 @@
    ```bash
    cd ./src
    python3 dataset.py
-```
+   ```
+   Training the model:
+   ```bash
+   cd ./networks
+   python3 MAGANet.py
+   ```
+   Evaluating the model:
+   ```bash
+   cd ../..
+   python3 main.py
+   ```
 
 ## Accreditation
 
