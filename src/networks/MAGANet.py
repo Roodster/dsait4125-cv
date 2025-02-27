@@ -13,10 +13,10 @@ import matplotlib.pyplot as plt
 
 # Encoder Network
 class Encoder(nn.Module):
-    def __init__(self, latent_dim=10):
+    def __init__(self, latent_dim=10, input_channels=1):
         super(Encoder, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(2, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
+            nn.Conv2d(input_channels, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU()
@@ -30,10 +30,15 @@ class Encoder(nn.Module):
         )
 
     def forward(self, x1, x2):
-        x = torch.cat([x1, x2], dim=1)
-        x = self.conv(x)
-        x = x.view(x.size(0), -1)
-        return self.fc(x)
+        z1 = self.conv(x1)
+        z2 = self.conv(x2)
+
+        z1 = z1.view(z1.size(0), -1)
+        z2 = z2.view(z2.size(0), -1)
+
+        z1 = self.fc(z1)
+        z2 = self.fc(z2)
+        return z2-z1
 
 class ActNorm(nn.Module):
     def __init__(self, num_channels):
@@ -117,28 +122,25 @@ class FlowModule(nn.Module):
         return x
 
 
-class FiLM(nn.Module):
-    """ Feature-wise Linear Modulation (FiLM) to apply a learned transformation based on z. """
-
-    def __init__(self, latent_dim, num_channels):
+class Affine(nn.Module):
+    """Affine applying x' + Mz transformation."""
+    def __init__(self, latent_dim, num_channels, height, width):
         super().__init__()
-        self.fc_gamma = nn.Linear(latent_dim, num_channels)
-        self.fc_beta = nn.Linear(latent_dim, num_channels)
+        self.fc_M = nn.Linear(latent_dim, num_channels * height * width)
 
     def forward(self, x, z):
-        """ Apply FiLM modulation: gamma(z) * x + beta(z) """
+        """ Apply affine transformation: x' + Mz """
         B, C, H, W = x.shape
-        gamma = self.fc_gamma(z).view(B, C, 1, 1)
-        beta = self.fc_beta(z).view(B, C, 1, 1)
-        return gamma * x + beta
+        Mz = self.fc_M(z).view(B, C, H, W)
+        return x + Mz
 
 
 class FlowNet(nn.Module):
     """ Decoder that learns the group action α: Z × X → X """
 
-    def __init__(self, num_channels, latent_dim):
+    def __init__(self, num_channels, latent_dim, height=64, width=64):
         super().__init__()
-        self.film = FiLM(latent_dim, num_channels)  # Modulate x1 using z
+        self.affine = Affine(latent_dim, num_channels,height,width)  # Modulate x1 using z
 
         self.flow_modules = nn.Sequential(
             FlowModule(num_channels),
@@ -153,7 +155,7 @@ class FlowNet(nn.Module):
 
     def forward(self, z, x1):
         """ z: latent vector (B, latent_dim), x1: input image (B, 1, 64, 64) """
-        x1_transformed = self.film(x1, z)  # Apply FiLM transformation
+        x1_transformed = self.affine(x1, z)  # Apply FiLM transformation
         x2 = self.flow_modules(x1_transformed)  # Apply flow-based transformations
         x2 = self.unsqueeze(x2)
         return torch.sigmoid(x2) # ensure intensity [0,1]
@@ -162,7 +164,7 @@ class FlowNet(nn.Module):
 class MAGANet(nn.Module):
     def __init__(self, in_channels=1, latent_dim=10):
         super().__init__()
-        self.encoder = Encoder(latent_dim)
+        self.encoder = Encoder(latent_dim,in_channels)
         self.decoder = FlowNet(in_channels, latent_dim)
 
     def forward(self, x1, x2):
