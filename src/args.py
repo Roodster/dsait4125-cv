@@ -5,7 +5,7 @@
 
 import torch as th
 from src.common.utils import parse_args
-
+from datetime import datetime
 class Args():
     
     def __init__(self, file):
@@ -14,12 +14,12 @@ class Args():
         
         # ===== METADATA =====
         self.exp_name = self.config.get("exp_name", "exp")
-
-        # ===== FILE HANDLING =====
-        self.log_dir = self.config.get("log_dir", "./outputs")
         
         # ===== MODEL =====
         self.model_name = self.config.get("model_name", "model")
+        self.latent_dim = self.config.get("latent_dim", 10)
+        self.in_channels = self.config.get("in_channels", 1)
+        self.img_size = self.config.get("img_size", 64)
         
         # ===== DATASET =====
         self.train_ratio = self.config.get("train_ratio", 0.7)
@@ -35,11 +35,17 @@ class Args():
         self.n_epochs = self.config.get("n_epochs", 100)
         self.learning_rate = self.config.get("learning_rate", 1e-3)
         
+        # ===== MAGA =====
+        self.beta_kl = self.config.get("beta_kl", 1)
+        self.beta_recon = self.config.get("beta_recon", 1)
+        
         # ===== EVALUATION =====
         self.eval_interval = self.config.get("eval_interval", 10)
+        
         self.eval_save_model_interval = self.config.get("eval_save_model_interval", 10)
-
-        # ===== PLOTTING =====
-
+        
+        # ===== FILE HANDLING =====
+        self.log_dir = self.config.get("log_dir", "./outputs") + f"/run_{self.exp_name}_{self.model_name}/seed_{self.seed}_{datetime.now().strftime('%d%m%Y%H%M')}"
+        
     def default(self):
         return self.__dict__

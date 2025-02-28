@@ -1,17 +1,16 @@
-import torch
-from torch.utils.data import DataLoader
-
 import torch.nn as nn
 import warnings
 warnings.filterwarnings('ignore')
-import matplotlib.pyplot as plt
 
 from src.args import Args
 from src.registry import setup
-from src.dataset import get_dataloaders, SyntheticDataset, DspritesDataset, get_dataloaders_2element
+from src.dataset import DspritesDataset, get_dataloaders_2element, BinarySyntheticDataset, get_dataloaders
 from src.experiment import Experiment
 from src.common.utils import set_seed
+<<<<<<< HEAD
 from src.networks.MAGANet import MAGANet, kl_divergence, latent_reconstruction_loss
+=======
+>>>>>>> fb2a905 (Updates)
 
 def main():
         
@@ -21,19 +20,24 @@ def main():
     set_seed(args.seed)
 
     # load dataset
-    # dataset = SyntheticDataset(num_classes=2, n_samples_per_class=128, x_dim=3, y_dim=64, z_dim=64)
     train_data = DspritesDataset("./data/2d/train.npz")
     test_data = DspritesDataset("./data/2d/test.npz")
     train_loader, test_loader = get_dataloaders_2element(train_data, test_data,
                                                 batch_size=args.batch_size)
 
+    # dataset = BinarySyntheticDataset(num_classes=3, n_samples_per_class=100, img_size=64, pattern_type='geometric', seed=42, noise_prob=0.05)
+    # train_loader, test_loader, val_loader = get_dataloaders(dataset=dataset, train_ratio=0.7, test_ratio=0.2, batch_size=32)
 
-    model = MAGANet(in_channels=1, latent_dim=10)  # Reinitialize model
-    model.load_state_dict(torch.load("./outputs/magan_model.pth"))  # Load saved weights
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
-    model.eval()  # Set model to evaluation mode
+    # initialize experiment
+    experiment = Experiment(registry=registry, 
+                            args=args 
+                            )
+    
+    # run experiment
+    experiment.run(train_loader=train_loader, test_loader=test_loader)
+    
 
+<<<<<<< HEAD
     loss_fn = nn.BCELoss()
     running_loss = 0.0
     print("start testing...")
@@ -84,6 +88,8 @@ def main():
         axes[2].axis("off")
 
         plt.show()
+=======
+>>>>>>> fb2a905 (Updates)
 
 if __name__ == "__main__":
     main()

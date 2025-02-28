@@ -1,14 +1,18 @@
 import pandas as pd
 import numpy as np
-
 from pprint import pprint
 
 class Results:
+    """
+    Class to store and manage experiment results.
+    Handles metrics with different lengths and ensures only raw values are stored.
+    """
     def __init__(self, file=None, verbose=False):
         self._prev_results = None
         self._results = None
         self.verbose = verbose
-        # Initialize lists
+        
+        # Initialize metric lists
         self._epochs = []
         self._train_losses = []
         self._test_losses = []
@@ -17,52 +21,78 @@ class Results:
         self._precisions = []
         self._aucs = []
         self._f1s = []
+        self._recon_losses = []
+        self._recon_latent_losses = []
+        self._kl_losses = []
+        
         # If a file is provided, read the data and populate the lists
         if file is not None:
             self._prev_results = pd.read_csv(file)
             
             # Populate the lists with data from the dataframe
-            self._epochs = self._prev_results['epoch'].tolist()
-            self._train_losses = self._prev_results['train_loss'].tolist()
-            self._test_losses = self._prev_results['test_loss'].tolist()
-            self._accuracies = self._prev_results['accuracy'].tolist()
-            self._precisions = self._prev_results['precision'].tolist()
-            self._aucs = self._prev_results['auc'].tolist()
-            self._f1s = self._prev_results['f1'].tolist()
+            for column in self._prev_results.columns:
+                attr_name = f"_{column}s" if not column.endswith('s') else f"_{column}"
+                if hasattr(self, attr_name):
+                    setattr(self, attr_name, self._prev_results[column].tolist())
 
     def get(self):
-
-        results = self._get()
-        self._results = pd.DataFrame(results)
-
+        """Returns a DataFrame with all metrics that have the same length."""
+        results_dict = self._get_valid_metrics()
+        self._results = pd.DataFrame(results_dict)
         return self._results
     
-    def _get(self):
-        return {
-                'epoch': self._epochs,
-                'train_loss': self._train_losses,
-                'test_loss': self._test_losses,
-                'accuracy': self._accuracies,
-                'precision': self._precisions,
-                'auc': self._aucs,
-                'f1': self._f1s,
-            }
+    def _get_valid_metrics(self):
+        """Returns a dictionary with metrics that have the same length."""
+        # Get all attribute names that start with underscore and are lists
+        metric_attrs = {attr: getattr(self, attr) for attr in dir(self) 
+                       if attr.startswith('_') and isinstance(getattr(self, attr), list)}
+        
+        # Find the most common length among non-empty lists
+        lengths = [len(val) for val in metric_attrs.values() if len(val) > 0]
+        if not lengths:
+            return {}
+            
+        # Get the most common length
+        target_len = max(set(lengths), key=lengths.count)
+        
+        # Filter attributes to only include those with the target length
+        valid_metrics = {}
+        for attr, values in metric_attrs.items():
+            if len(values) == target_len:
+                # Remove the leading underscore for the key
+                key = attr[1:] if attr.endswith('s') else attr[1:] + 's'
+                valid_metrics[key] = values
+                
+        return valid_metrics
     
     def print(self):
-        pprint(self._get())
+        """Print the valid metrics."""
+        pprint(self._get_valid_metrics())
 
     def update(self, updates):
         """Updates attributes based on the provided dictionary."""
         for attr_name, value in updates.items():
-            if hasattr(self, "_" + attr_name):  # Check if the attribute exists
-                current_value = getattr(self, "_" + attr_name)
-                if isinstance(current_value, list): # If it's a list, append
-                    current_value.append(value)
-                else:                               # Otherwise, directly set
-                    setattr(self, "_" + attr_name, value)
+            # Convert to the internal attribute name format
+            internal_name = f"_{attr_name}"
+            
+            # If attribute doesn't exist, create it
+            if not hasattr(self, internal_name):
+                setattr(self, internal_name, [])
+                if self.verbose:
+                    print(f"Created new metric: {attr_name}")
+            
+            # Get the current value
+            current_value = getattr(self, internal_name)
+            
+            # Ensure we're storing raw values, not tensors
+            if hasattr(value, 'item'):
+                value = value.item()
+            
+            # Update the attribute
+            if isinstance(current_value, list):
+                current_value.append(value)
             else:
-                print(f"Warning: Attribute '{attr_name}' not found in Results object.")
-
+                setattr(self, internal_name, value)
 
     # Property and setter for train_losses
     @property
@@ -71,6 +101,9 @@ class Results:
     
     @train_losses.setter
     def train_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
         self._train_losses.append(value)
 
     # Property and setter for test_losses
@@ -80,6 +113,9 @@ class Results:
     
     @test_losses.setter
     def test_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
         self._test_losses.append(value)
 
     # Property and setter for epochs
@@ -89,17 +125,21 @@ class Results:
     
     @epochs.setter
     def epochs(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
         self._epochs.append(value)
 
     # Property and setter for accuracies
     @property
     def accuracies(self):
-        if self.verbose:
-            print('accuracies: \n', self._accuracies)
         return self._accuracies
     
     @accuracies.setter
     def accuracies(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
         self._accuracies.append(value)
 
     # Property and setter for sensitivities
@@ -109,6 +149,9 @@ class Results:
     
     @sensitivities.setter
     def sensitivities(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
         self._sensitivities.append(value)
 
     # Property and setter for precisions
@@ -118,6 +161,9 @@ class Results:
     
     @precisions.setter
     def precisions(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
         self._precisions.append(value)
 
     # Property and setter for aucs
@@ -127,14 +173,55 @@ class Results:
     
     @aucs.setter
     def aucs(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
         self._aucs.append(value)
 
-    # Property and setter for accuracy (overall accuracy)
+    # Property and setter for f1s
     @property
     def f1s(self):
         return self._f1s
     
     @f1s.setter
     def f1s(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
         self._f1s.append(value)
         
+    # Property and setter for recon_losses
+    @property
+    def recon_losses(self):
+        return self._recon_losses
+    
+    @recon_losses.setter
+    def recon_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._recon_losses.append(value)
+        
+    # Property and setter for recon_latent_losses
+    @property
+    def recon_latent_losses(self):
+        return self._recon_latent_losses
+    
+    @recon_latent_losses.setter
+    def recon_latent_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._recon_latent_losses.append(value)
+        
+    # Property and setter for kl_losses
+    @property
+    def kl_losses(self):
+        return self._kl_losses
+    
+    @kl_losses.setter
+    def kl_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._kl_losses.append(value)

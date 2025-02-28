@@ -44,7 +44,7 @@ class Experiment:
             
             if (epoch + 1) % self.eval_interval == 0: 
                 self.results = self.learner.evaluate(
-                    dataloader=test_loader, results=self.results
+                    data_loader=test_loader, results=self.results
                 )
 
                 self.results.epochs = epoch

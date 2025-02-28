@@ -1,0 +1,1 @@
+from src.losses.maga_loss import MAGALoss

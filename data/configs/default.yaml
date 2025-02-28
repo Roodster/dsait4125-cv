@@ -5,8 +5,14 @@ exp_name: dev
 log_dir: ./outputs
 
 # ===== EXPERIMENT ====
-model_name: base
+model_name: maga
 seed: 1
+
+
+# ===== MODEL PARAMETERS =====
+in_channels: 1
+img_size: 64
+latent_dim: 10
 
 ### ===== DATASET PARAMETERS =====
 train_ratio: 0.7
@@ -16,7 +22,7 @@ test_ratio: 0.3
 device: cpu
 batch_size: 256
 learning_rate: 0.001
-n_epochs: 3
+n_epochs: 1
 
 eval_save_model_interval: 1
 eval_interval: 1
