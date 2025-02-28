@@ -11,7 +11,7 @@ from src.registry import setup
 from src.dataset import get_dataloaders, SyntheticDataset, DspritesDataset, get_dataloaders_2element
 from src.experiment import Experiment
 from src.common.utils import set_seed
-from src.networks.MAGANet import MAGANet
+from src.networks.MAGANet import MAGANet, kl_divergence, latent_reconstruction_loss
 
 def main():
         
@@ -40,12 +40,21 @@ def main():
     generated_image = None
     x1_sample = None  # Store x1 for visualization
     x2_sample = None  # Store x2 for visualization
+    beta_kl = 1
+    beta_lr = 1
     for batch_idx, (x1, x2) in enumerate(test_loader):
         x1, x2 = x1.to(device), x2.to(device)  # Move tensors to GPU if available
 
-        x_transformed = model(x1, x2)  # Forward pass
+        x_transformed, mu1, logvar1, mu2, logvar2  = model(x1, x2)  # Forward pass
 
-        loss = loss_fn(x_transformed, x2)  # Compute BCE loss
+        loss_bce = loss_fn(x_transformed, x2)  # Compute BCE loss
+        loss_kl = kl_divergence(mu1, logvar1) + kl_divergence(mu2, logvar2)  # KL loss
+
+        loss_recon_latent = latent_reconstruction_loss(model.encoder, model.decoder, x1,
+                                                       mu1)  # latent_reconstruction_loss
+
+        # Final loss function
+        loss = loss_bce + beta_kl * loss_kl + beta_lr * loss_recon_latent
 
         running_loss += loss.item()
 

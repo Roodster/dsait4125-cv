@@ -26,19 +26,30 @@ class Encoder(nn.Module):
             nn.ReLU(),
             nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(256, latent_dim)
+            nn.Linear(256, 2*latent_dim)
         )
 
+    def sample_z(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)  # Convert log-variance to standard deviation
+        eps = torch.randn_like(std)  # Sample from N(0, I)
+        return mu + eps * std
+
     def forward(self, x1, x2):
-        z1 = self.conv(x1)
-        z2 = self.conv(x2)
+        h1 = self.conv(x1)
+        h2 = self.conv(x2)
 
-        z1 = z1.view(z1.size(0), -1)
-        z2 = z2.view(z2.size(0), -1)
+        h1 = h1.view(h1.size(0), -1)
+        h2 = h2.view(h2.size(0), -1)
 
-        z1 = self.fc(z1)
-        z2 = self.fc(z2)
-        return z2-z1
+        h1 = self.fc(h1)
+        h2 = self.fc(h2)
+
+        mu1, logvar1 = torch.chunk(h1, chunks=2, dim=-1)
+        mu2, logvar2 = torch.chunk(h2, chunks=2, dim=-1)
+
+        z1 = self.sample_z(mu1,logvar1)
+        z2 = self.sample_z(mu2,logvar2)
+        return z2-z1, mu1, logvar1, mu2, logvar2
 
 class ActNorm(nn.Module):
     def __init__(self, num_channels):
@@ -168,10 +179,19 @@ class MAGANet(nn.Module):
         self.decoder = FlowNet(in_channels, latent_dim)
 
     def forward(self, x1, x2):
-        z = self.encoder(x1, x2)
+        z, mu1, logvar1, mu2, logvar2 = self.encoder(x1, x2)
         generated_x2 = self.decoder(z, x1)  # Decoder generates x2 using z and x1
-        return generated_x2
+        return generated_x2, mu1, logvar1, mu2, logvar2
 
+def kl_divergence(mu, logvar):
+    """ Compute KL divergence loss """
+    return 0.5 * torch.sum(torch.exp(logvar) + mu**2 - 1 - logvar)
+
+def latent_reconstruction_loss(encoder, decoder, x, z):
+    """ Compute L_recon_latent = || E(x, D(z, x)) - z ||_1 """
+    x_transformed = decoder(z, x)  # Apply transformation D(z, x)
+    z_reconstructed, _, _, _, _ = encoder(x, x_transformed)  # Get E(x, D(z, x))
+    return torch.mean(torch.abs(z_reconstructed - z))  # L1 norm
 
 if __name__ == "__main__":
     # Load arguments
@@ -195,7 +215,9 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=0.0005)  # Adam optimizer
     loss_fn = nn.BCELoss()
 
-    num_epochs = 50
+    num_epochs = 100
+    beta_kl = 300
+    beta_lr = 300
 
     model.train()
     print("Start Training")
@@ -208,9 +230,15 @@ if __name__ == "__main__":
 
             optimizer.zero_grad()  # Zero gradients
 
-            x_transformed = model(x1, x2)  # Forward pass
+            x_transformed, mu1, logvar1, mu2, logvar2 = model(x1, x2)  # Forward pass
 
-            loss = loss_fn(x_transformed, x2)  # Compute BCE loss
+            loss_bce = loss_fn(x_transformed, x2)  # Compute BCE loss
+            loss_kl = kl_divergence(mu1, logvar1) + kl_divergence(mu2, logvar2)  # KL loss
+
+            loss_recon_latent = latent_reconstruction_loss(model.encoder, model.decoder, x1, mu1)  # latent_reconstruction_loss
+
+            # Final loss function
+            loss = loss_bce + beta_kl * loss_kl + beta_lr * loss_recon_latent
             loss.backward()  # Backpropagation
             optimizer.step()  # Update weights
 
