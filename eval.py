@@ -8,10 +8,11 @@ import matplotlib.pyplot as plt
 
 from src.args import Args
 from src.registry import setup
-from src.dataset import get_dataloaders, SyntheticDataset, DspritesDataset, get_dataloaders_2element
+from src.dataset import get_dataloaders,  DspritesDataset, get_dataloaders_2element
 from src.experiment import Experiment
 from src.common.utils import set_seed
 from src.networks.maga_net import MAGANet, kl_divergence, latent_reconstruction_loss
+from src.losses import MAGALoss
 
 def main():
         
@@ -28,13 +29,13 @@ def main():
                                                 batch_size=args.batch_size)
 
 
-    model = MAGANet(in_channels=1, latent_dim=10)  # Reinitialize model
-    model.load_state_dict(torch.load("./outputs/magan_model.pth"))  # Load saved weights
+    model = MAGANet(args)  # Reinitialize model
+    model.load_state_dict(torch.load("./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # Load saved weights
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()  # Set model to evaluation mode
 
-    loss_fn = nn.BCELoss()
+    loss_fn = MAGALoss(args)
     running_loss = 0.0
     print("start testing...")
     generated_image = None
@@ -45,21 +46,14 @@ def main():
     for batch_idx, (x1, x2) in enumerate(test_loader):
         x1, x2 = x1.to(device), x2.to(device)  # Move tensors to GPU if available
 
-        x_transformed, mu1, logvar1, mu2, logvar2  = model(x1, x2)  # Forward pass
-
-        loss_bce = loss_fn(x_transformed, x2)  # Compute BCE loss
-        loss_kl = kl_divergence(mu1, logvar1) + kl_divergence(mu2, logvar2)  # KL loss
-
-        loss_recon_latent = latent_reconstruction_loss(model.encoder, model.decoder, x1,
-                                                       mu1)  # latent_reconstruction_loss
-
-        # Final loss function
-        loss = loss_bce + beta_kl * loss_kl + beta_lr * loss_recon_latent
+        z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
+        z_recon = model.compute_z_reconstruction(x1, decoded_x1)
+        loss,_,_,_ = loss_fn(x2, z, mu1, logvar1, mu2, logvar2, decoded_x2, z_recon)
 
         running_loss += loss.item()
 
         if batch_idx == 3:
-            generated_image = x_transformed.cpu().detach().numpy().squeeze()
+            generated_image = decoded_x1.cpu().detach().numpy().squeeze()
             x1_sample = x1.cpu().detach().numpy().squeeze()
             x2_sample = x2.cpu().detach().numpy().squeeze()
     avg_loss = running_loss / len(test_loader)

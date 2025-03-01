@@ -6,7 +6,7 @@ log_dir: ./outputs
 
 # ===== EXPERIMENT ====
 model_name: maga
-seed: 1
+seed: 42
 
 
 # ===== MODEL PARAMETERS =====
@@ -19,11 +19,11 @@ train_ratio: 0.7
 test_ratio: 0.3
 
 ### ===== TRAIN PARAMETERS =====
-device: cpu
-batch_size: 256
-learning_rate: 0.001
-n_epochs: 1
+device: cuda
+batch_size: 512
+learning_rate: 0.0005
+n_epochs: 100
 
 eval_save_model_interval: 1
-eval_interval: 1
+eval_interval: 10
 eval_sample_rate: 1 # eval sampling rate is number of labels per second.

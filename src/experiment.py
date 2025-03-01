@@ -51,3 +51,5 @@ class Experiment:
             
         # Save the results statistics
         self.writer.save_statistics(self.results.get())
+        # save the network parameters
+        self.writer.save_model(self.learner.model,epoch=self.last_epoch)

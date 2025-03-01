@@ -33,7 +33,7 @@ if __name__ == "__main__":
     latent_dim = 10
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = MAGANet(in_channels=1, latent_dim=10).cuda()  # Move to GPU if available
+    model = MAGANet(args).cuda()  # Move to GPU if available
     optimizer = optim.Adam(model.parameters(), lr=0.0005)  # Adam optimizer
     loss_fn = nn.BCELoss()
 
