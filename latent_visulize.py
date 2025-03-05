@@ -1,3 +1,5 @@
+from array import array
+
 import numpy as np
 import torch
 
@@ -6,8 +8,11 @@ from src.networks.maga_net import MAGANet
 from src.registry import setup
 from src.common.utils import set_seed
 import matplotlib.pyplot as plt
+# from sklearn.cluster import DBSCAN
+from sklearn.manifold import TSNE
+import umap
 
-def load_img(file_path):
+def encode_img(file_path):
     data = np.load(file_path)
     images = data["imgs"][:]
     latents_values = data["latents_values"][:]
@@ -50,12 +55,8 @@ def load_img(file_path):
     )
     result = images[mask]
     p_img = torch.tensor(p_img.reshape(1,1, 64, 64), dtype=torch.float32)
-    result = torch.tensor(result.reshape(-1,1, 64, 64), dtype=torch.float32)
-    return p_img, result
-
-if __name__ == "__main__":
-    p_img, imgs = load_img("./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz")
-    # print(imgs.shape)
+    imgs = torch.tensor(images.reshape(-1, 1, 64, 64), dtype=torch.float32)
+    # result = torch.tensor(result.reshape(-1,1, 64, 64), dtype=torch.float32)
 
     # Load arguments
     args = Args(file="./data/configs/default.yaml")
@@ -67,14 +68,88 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     p_img = p_img.to(device)
-    imgs = imgs.to(device)
+    imgs1 = imgs[:200000].to(device)
+    imgs2 = imgs[200000:400000].to(device)
+    imgs3 = imgs[400000:].to(device)
+    # imgs = imgs.to(device)
     model.eval()  # Set model to evaluation mode
 
     latent_vir = []
     for i in range(imgs.shape[0]):
         temp_i = imgs[i].reshape(1, 1, 64, 64)
-        z, mu1, logvar1, mu2, logvar2 = model.encoder(p_img,temp_i)
+        temp_i = temp_i.to(device)
+        z, mu1, logvar1, mu2, logvar2 = model.encoder(p_img, temp_i)
         latent_vir.append(z.detach().cpu().numpy())
 
-    plt.imshow(np.array(latent_vir).squeeze())
+    z = np.array(latent_vir).squeeze()
+    np.save("./outputs/latent_vir", z)
+    print("result saved")
+    return
+
+if __name__ == "__main__":
+    # encode_img('./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz')
+    z = np.load("./outputs/latent_vir.npy")
+    z = z[0:-1:10]
+    z_gt = np.load("./outputs/latent_vir_gt.npy")
+    # color, shape, scale, orientation, pos_x, pos_y
+
+    ### if only move 1 dim, how z looks like
+    # plt.imshow(z)
+    # plt.show()
+
+    ### use t-sne （very slow）
+    # z_embedded = TSNE(n_components=2, learning_rate='auto',
+    #               init='random', perplexity=3).fit_transform(z)
+    # plt.scatter(z_embedded[:, 0], z_embedded[:, 1])
+    # plt.show()
+
+    ### use umap
+    ## see shape
+    # classes = ['square', 'ellipse', 'heart']
+    # z_gt1 = z_gt[0:-1:10][:, 1].reshape(-1)  # shape
+    # z_embedded = umap.UMAP(n_neighbors=80).fit_transform(z)
+    # fig, ax = plt.subplots(1, figsize=(14, 10))
+    # plt.scatter(*z_embedded.T, s=0.3, c=z_gt1, alpha=0.3)
+    # plt.setp(ax, xticks=[], yticks=[])
+    # cbar = plt.colorbar()
+    # cbar.set_ticks(np.array([1,2,3]))
+    # cbar.set_ticklabels(classes)
+    # plt.show()
+
+    ## see position
+    # z_embedded = umap.UMAP(n_neighbors=80).fit_transform(z)
+    # fig, ax = plt.subplots(1,2, figsize=(18, 10))
+    # z_gt1 = z_gt[0:-1:10][:, -2].reshape(-1, 1)  # pos_x
+    # sc1 = ax[0].scatter(*z_embedded.T, s=0.3, c=z_gt1, alpha=0.3)
+    # ax[0].set_title("Color by pos_x")
+    #
+    # z_gt2 = z_gt[0:-1:10][:, -1].reshape(-1)  # Ensure proper slicing
+    # sc2 = ax[1].scatter(*z_embedded.T, s=0.3, c=z_gt2, alpha=0.3)
+    # ax[1].set_title("Color by pos_y")
+    #
+    # for a in ax:
+    #     a.set_xticks([])
+    #     a.set_yticks([])
+    # fig.colorbar(sc1, ax=ax[0])
+    # fig.colorbar(sc2, ax=ax[1])
+    # plt.show()
+
+    ## see scale
+    # z_gt1 = z_gt[0:-1:10][:, 2].reshape(-1)  # scale
+    # z_embedded = umap.UMAP(n_neighbors=80).fit_transform(z)
+    # fig, ax = plt.subplots(1, figsize=(14, 10))
+    # plt.scatter(*z_embedded.T, s=0.3, c=z_gt1, alpha=0.3)
+    # plt.setp(ax, xticks=[], yticks=[])
+    # cbar = plt.colorbar()
+    # cbar.set_ticks(z_gt1)
+    # plt.show()
+
+    ## see orientation
+    z_gt1 = z_gt[0:-1:10][:, 3].reshape(-1)  # orientation
+    z_embedded = umap.UMAP(n_neighbors=80).fit_transform(z)
+    fig, ax = plt.subplots(1, figsize=(14, 10))
+    plt.scatter(*z_embedded.T, s=0.3, c=z_gt1, alpha=0.3)
+    plt.setp(ax, xticks=[], yticks=[])
+    cbar = plt.colorbar()
+    cbar.set_ticks(z_gt1)
     plt.show()
