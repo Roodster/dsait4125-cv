@@ -50,7 +50,7 @@ def get_mask(file_path, mask_num):
     if mask_num == 1:
         # mask for orientation
         mask = (
-                #(shape_ == 3.) &
+                (shape_ == 3.) &
                 # (scale == 0.7) &
                 # (np.isclose(position_x, 0.16, atol=1e-2)) &
                 (np.isclose(position_y, 0.48387097, atol=1e-2))
@@ -176,43 +176,43 @@ if __name__ == "__main__":
     # plt.show()
 
     ## see scale
-    mask = get_mask("./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz", 4)
-    z1 = np.load("./outputs/latent_vir.npy")
-    z1 = z1[mask]
-    z_gt1 = z_gt[mask][:, 2].reshape(-1)  # scale
-    z_embedded1 = umap.UMAP(n_neighbors=80).fit_transform(z1)
-
-    mask = get_mask("./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz", 5)
-    z2 = np.load("./outputs/latent_vir.npy")
-    z2 = z2[mask]
-    z_gt2 = z_gt[mask][:, 2].reshape(-1)  # scale
-    z_embedded2 = umap.UMAP(n_neighbors=80).fit_transform(z1)
-
-    fig, ax = plt.subplots(1,2, figsize=(18, 10))
-    sc1 = ax[0].scatter(*z_embedded1.T, s=10, c=z_gt1, alpha=0.5)
-    ax[0].set_title("fix pos_y")
-    sc2 = ax[1].scatter(*z_embedded2.T, s=10, c=z_gt2, alpha=0.5)
-    ax[1].set_title("fix pos_x")
-
-    for a in ax:
-        a.set_xticks([])
-        a.set_yticks([])
-    fig.colorbar(sc1, ax=ax[0])
-    fig.colorbar(sc2, ax=ax[1])
-    plt.show()
+    # mask = get_mask("./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz", 4)
+    # z1 = np.load("./outputs/latent_vir.npy")
+    # z1 = z1[mask]
+    # z_gt1 = z_gt[mask][:, 2].reshape(-1)  # scale
+    # z_embedded1 = umap.UMAP(n_neighbors=80).fit_transform(z1)
+    #
+    # mask = get_mask("./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz", 5)
+    # z2 = np.load("./outputs/latent_vir.npy")
+    # z2 = z2[mask]
+    # z_gt2 = z_gt[mask][:, 2].reshape(-1)  # scale
+    # z_embedded2 = umap.UMAP(n_neighbors=80).fit_transform(z1)
+    #
+    # fig, ax = plt.subplots(1,2, figsize=(18, 10))
+    # sc1 = ax[0].scatter(*z_embedded1.T, s=10, c=z_gt1, alpha=0.5)
+    # ax[0].set_title("fix pos_y")
+    # sc2 = ax[1].scatter(*z_embedded2.T, s=10, c=z_gt2, alpha=0.5)
+    # ax[1].set_title("fix pos_x")
+    #
+    # for a in ax:
+    #     a.set_xticks([])
+    #     a.set_yticks([])
+    # fig.colorbar(sc1, ax=ax[0])
+    # fig.colorbar(sc2, ax=ax[1])
+    # plt.show()
 
     ## see orientation
-    # mask = get_mask("./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz", 1)
-    # z = np.load("./outputs/latent_vir.npy")
-    # z = z[mask]
-    # z_gt1 = z_gt[mask][:, 3].reshape(-1)  # orientation
-    # z_embedded = umap.UMAP(n_neighbors=5,n_components=2).fit_transform(z)
-    # fig, ax = plt.subplots(1, figsize=(14, 10))
-    # plt.scatter(*z_embedded.T, s=10, c=z_gt1, alpha=0.3)
-    # plt.setp(ax, xticks=[], yticks=[])
-    # cbar = plt.colorbar()
-    # cbar.set_ticks(z_gt1)
-    # plt.show()
+    mask = get_mask("./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz", 1)
+    z = np.load("./outputs/latent_vir.npy")
+    z = z[mask]#[0:-1:5]
+    z_gt1 = z_gt[mask][:, 3].reshape(-1)  # orientation
+    z_embedded = umap.UMAP(n_neighbors=80,n_components=2).fit_transform(z)
+    fig, ax = plt.subplots(1, figsize=(14, 10))
+    plt.scatter(*z_embedded.T, s=20, c=z_gt1, cmap='hsv', alpha=0.3) # change to a cyclic cmap
+    plt.setp(ax, xticks=[], yticks=[])
+    cbar = plt.colorbar()
+    cbar.set_ticks(z_gt1)
+    plt.show()
 
     # # Create interactive 3D scatter plot with custom point size
     # fig = px.scatter_3d(
