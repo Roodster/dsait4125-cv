@@ -87,6 +87,7 @@ def encode_img(file_path):
     data = np.load(file_path)
     images = data["imgs"][:]
     latents_values = data["latents_values"][:]
+    # np.save("./outputs/latent_vir_gt", latents_values)
     # color, shape, scale, orientation, pos_x, pos_y
     # shape: square1, ellipse2, heart3
 
@@ -111,14 +112,16 @@ def encode_img(file_path):
     registry = setup(args.model_name)
     set_seed(args.seed)
     model = MAGANet(args)  # Reinitialize model
+    # model.load_state_dict(torch.load(
+    #     "./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # Load saved weights
     model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # Load saved weights
+        "./outputs/run_dev_maga/seed_42_100320251508/run_dev_maga/seed_42/models/model2range.pth"))  # Load saved weights
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     p_img = p_img.to(device)
-    imgs1 = imgs[:200000].to(device)
-    imgs2 = imgs[200000:400000].to(device)
-    imgs3 = imgs[400000:].to(device)
+    # imgs1 = imgs[:200000].to(device)
+    # imgs2 = imgs[200000:400000].to(device)
+    # imgs3 = imgs[400000:].to(device)
     # imgs = imgs.to(device)
     model.eval()  # Set model to evaluation mode
 
@@ -130,13 +133,14 @@ def encode_img(file_path):
         latent_vir.append(z.detach().cpu().numpy())
 
     z = np.array(latent_vir).squeeze()
-    np.save("./outputs/latent_vir", z)
+    np.save("./outputs/latent_vir_2range", z)
     print("result saved")
     return
 
 if __name__ == "__main__":
-    # encode_img('./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz')
-    z = np.load("./outputs/latent_vir.npy")
+    encode_img('./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz')
+    # z = np.load("./outputs/latent_vir.npy")
+    z = np.load("./outputs/latent_vir_2range.npy")
     z_gt = np.load("./outputs/latent_vir_gt.npy")
     # color, shape, scale, orientation, pos_x, pos_y
 
