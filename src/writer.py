@@ -44,7 +44,7 @@ class Writer():
     
     def save_model(self, model, epoch):
         _dir = os.path.join(self.model_dir)
-        file = f"/model.pth"
+        file = f"/model2range.pth"
 
         full_path = _dir + file
         th.save(model.state_dict(), full_path)
