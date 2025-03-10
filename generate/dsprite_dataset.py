@@ -76,7 +76,7 @@ def prepare_2d_data_2range(file_path):
     # Define the mask for exclusion
     # shape: square1, ellipse2, heart3
     mask = (
-            (shape_ == 2.) &
+            (shape_ == 1.) &
             (position_x > 0.5)
     )
 
