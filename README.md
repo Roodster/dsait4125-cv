@@ -18,19 +18,12 @@
    Depending on the impact of the change, please request review before accepting the pull request :).
 
 4. Usage  
-   Before training, prepare the dataset.  
+   Before training, prepare the dataset. Download the dsprite dataset from [here](https://github.com/google-deepmind/dsprites-dataset/blob/master/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz) and put it in the `data/2d/` folder.  
    ```bash
-   cd ./src
-   python3 dataset.py
+   python3 generate/dsprite_dataset.py
    ```
    Training the model:
    ```bash
-   cd ./networks
-   python3 MAGANet.py
-   ```
-   Evaluating the model:
-   ```bash
-   cd ../..
    python3 main.py
    ```
 
