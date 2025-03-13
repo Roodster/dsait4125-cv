@@ -13,6 +13,7 @@ from sklearn.manifold import TSNE
 import umap
 from mpl_toolkits.mplot3d import Axes3D
 import plotly.express as px
+from sklearn.decomposition import PCA
 
 def get_mask(file_path, mask_num):
     # color, shape, scale, orientation, pos_x, pos_y
@@ -113,9 +114,9 @@ def encode_img(file_path):
     set_seed(args.seed)
     model = MAGANet(args)  # Reinitialize model
     # model.load_state_dict(torch.load(
-    #     "./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # Load saved weights
+    #     "./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # 2element model
     model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_42_100320251508/run_dev_maga/seed_42/models/model2range.pth"))  # Load saved weights
+        "./outputs/run_dev_maga/seed_42_100320251508/run_dev_maga/seed_42/models/model2range.pth"))  # 2range model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     p_img = p_img.to(device)
@@ -138,9 +139,9 @@ def encode_img(file_path):
     return
 
 if __name__ == "__main__":
-    encode_img('./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz')
-    # z = np.load("./outputs/latent_vir.npy")
-    z = np.load("./outputs/latent_vir_2range.npy")
+    # encode_img('./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz')
+    z = np.load("./outputs/latent_vir.npy")
+    # z = np.load("./outputs/latent_vir_2range.npy")
     z_gt = np.load("./outputs/latent_vir_gt.npy")
     # color, shape, scale, orientation, pos_x, pos_y
 
@@ -149,6 +150,24 @@ if __name__ == "__main__":
     #               init='random', perplexity=3).fit_transform(z)
     # plt.scatter(z_embedded[:, 0], z_embedded[:, 1])
     # plt.show()
+
+    ### use PCA (can't cope non-linear)
+    ## see shape
+    # classes = ['square', 'ellipse', 'heart']
+    # z = z[0:-1:10]
+    # z_gt1 = z_gt[0:-1:10][:, 1].reshape(-1)  # shape
+    # pca = PCA(n_components=2)
+    # z_embedded = pca.fit_transform(z)
+    # fig, ax = plt.subplots(1, figsize=(10, 7))
+    # plt.scatter(*z_embedded.T, s=0.3, c=z_gt1 - 1, alpha=0.3)
+    # plt.setp(ax, xticks=[], yticks=[])
+    # cbar = plt.colorbar(boundaries=np.arange(4) - 0.5, spacing='uniform')
+    # cbar.set_ticks(np.array([0, 1, 2]))
+    # cbar.set_ticklabels(classes)
+    # plt.title("Color by shape")
+    # plt.show()
+    # # plt.savefig("./outputs/shape.jpg", dpi=100, bbox_inches='tight')
+    # plt.close(fig)
 
     ### use umap
     ## see shape
@@ -168,7 +187,7 @@ if __name__ == "__main__":
     plt.close(fig)
 
     ## see position
-    fig, ax = plt.subplots(1,2, figsize=(18, 10))
+    fig, ax = plt.subplots(1,2, figsize=(16, 7))
     z_gt1 = z_gt[0:-1:10][:, -2].reshape(-1, 1)  # pos_x
     sc1 = ax[0].scatter(*z_embedded.T, s=0.3, c=z_gt1, alpha=0.3)
     ax[0].set_title("Color by pos_x")
