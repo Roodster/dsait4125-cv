@@ -1,5 +1,5 @@
-from maga_loss import MAGALoss
-from vae_loss import VAELoss
+from .maga_loss import MAGALoss
+from .vae_loss import VAELoss
 
 
 __all__ = [

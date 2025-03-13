@@ -1,8 +1,8 @@
 import torch as th 
 
-from networks import VisionModel, MAGANet, VAE
-from learners import ClassificationLearner, MAGALearner, VAELearner
-from losses import MAGALoss, VAELoss
+from src.networks import VisionModel, MAGANet, VAE
+from src.learners import ClassificationLearner, MAGALearner, VAELearner
+from src.losses import MAGALoss, VAELoss
 
 REGISTRY = {
     'base': {
@@ -19,7 +19,7 @@ REGISTRY = {
     },
     'vae': {
         'model': VAE,
-        'learner': VAELearner, #need to create this class,
+        'learner': VAELearner,
         'optimizer': th.optim.Adam,
         'criterion': VAELoss
     }
