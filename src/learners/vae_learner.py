@@ -22,8 +22,41 @@ class VAELearner(BaseLearner):
         return loss
 
     def step(self, data_loader, results):
-        pass
-    
-    
+        self.model.train()
+        train_loss = .0
+
+        for x in data_loader:
+            x.to(self.args.device)
+
+            recon_x, mu, logvar = self.model(x)
+            loss, _, _ = self.compute_loss(recon_x, mu, logvar)
+            self.update(loss=loss)
+
+            train_loss += loss.item()
+
+        results.train_losses = train_loss / len(data_loader)
+        return results
+
     def evaluate(self, data_loader, results):
-        pass
+        self.model.evalI()
+        test_loss = 0.0
+
+        metrics = {}
+
+        with th.no_grad():
+            for i,x in enumerate(data_loader):
+                
+                x = x.to(self.args.device)
+
+                recon_x, mu, logvar = self.model(x)
+                loss, recon_loss, kl_loss = self.compute_loss(recon_x, mu, logvar)
+                test_loss +=loss.item()
+
+        metrics['test_losses'] = test_loss / len(data_loader)
+        metrics['recon_losses'] = recon_loss / len(data_loader)
+        metrics['kl_losses'] = kl_loss / len(data_loader)
+
+        results.update(metrics)
+
+        return results
+
