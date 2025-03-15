@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class VAELoss(nn.Module):
-    def __init__(self, beta_kl=1.0):
+    def __init__(self, args):
         super(VAELoss, self).__init__()
-        self.beta_kl = beta_kl  # KL-divergence weight
+        self.beta_kl = args.beta_kl  # KL-divergence weight
 
     def forward(self, recon_x, x, mu, logvar):
 

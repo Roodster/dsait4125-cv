@@ -18,23 +18,38 @@ class VAELearner(BaseLearner):
         self.optimizer.step()
     
     def compute_loss(self, x, mu, logvar, decoded_x):
-        loss = self.criterion(x, mu, logvar, decoded_x)
-        return loss
+        loss, recon_loss, kl_loss = self.criterion(decoded_x, x, mu, logvar)
+        return loss, recon_loss, kl_loss
 
     def step(self, data_loader, results):
         self.model.train()
-        train_loss = .0
+        train_loss = 0.0
+        total_recon_loss = 0.0
+        total_kl_loss = 0.0
 
         for x in data_loader:
-            x.to(self.args.device)
+            x = x.to(self.args.device)
 
+            # Forward pass
             recon_x, mu, logvar = self.model(x)
-            loss, _, _ = self.compute_loss(recon_x, mu, logvar)
+
+            # Compute loss (correct argument order)
+            loss, recon_loss, kl_loss = self.compute_loss(x, mu, logvar, recon_x)
+
+            # Backpropagation and optimization step
             self.update(loss=loss)
 
+            # Track total loss
             train_loss += loss.item()
+            total_recon_loss += recon_loss.item()
+            total_kl_loss += kl_loss.item()
 
-        results.train_losses = train_loss / len(data_loader)
+        # Store averaged losses in results
+        num_batches = len(data_loader)
+        results.train_losses = train_loss / num_batches
+        results.recon_losses = total_recon_loss / num_batches
+        results.kl_losses = total_kl_loss / num_batches
+
         return results
 
     def evaluate(self, data_loader, results):
