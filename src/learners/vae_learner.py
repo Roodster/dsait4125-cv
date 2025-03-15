@@ -43,8 +43,6 @@ class VAELearner(BaseLearner):
         # Store averaged losses in results
         num_batches = len(data_loader)
         results.train_losses = train_loss / num_batches
-        results.recon_losses = total_recon_loss / num_batches
-        results.kl_losses = total_kl_loss / num_batches
 
         return results
 
