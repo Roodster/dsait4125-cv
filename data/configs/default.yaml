@@ -13,8 +13,8 @@ seed: 42
 in_channels: 1
 img_size: 64
 latent_dim: 10
-beta_kl : 1
-beta_recon : 1
+beta_kl : 10
+beta_recon : 10
 
 ### ===== DATASET PARAMETERS =====
 train_ratio: 0.7
@@ -29,3 +29,5 @@ n_epochs: 100
 eval_save_model_interval: 1
 eval_interval: 10
 eval_sample_rate: 1 # eval sampling rate is number of labels per second.
+
+save_model_name: model_2element

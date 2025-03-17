@@ -46,6 +46,6 @@ class Args():
         
         # ===== FILE HANDLING =====
         self.log_dir = self.config.get("log_dir", "./outputs") + f"/run_{self.exp_name}_{self.model_name}/seed_{self.seed}_{datetime.now().strftime('%d%m%Y%H%M')}"
-        
+        self.save_model_name = self.config.get("save_model_name", "model")
     def default(self):
         return self.__dict__

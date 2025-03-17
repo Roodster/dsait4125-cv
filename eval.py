@@ -24,7 +24,7 @@ def main():
 
     # load dataset
     # dataset = SyntheticDataset(num_classes=2, n_samples_per_class=128, x_dim=3, y_dim=64, z_dim=64)
-    train_data = DspritesDataset("./data/2d/train2range.npz")
+    train_data = DspritesDataset("./data/2d/train.npz")
     test_data = DspritesDataset("./data/2d/test.npz")
     train_loader, test_loader = get_dataloaders_2element(train_data, test_data,
                                                 batch_size=args.batch_size)
@@ -35,8 +35,10 @@ def main():
     #   "./outputs/run_dev_maga/seed_42_100320251508/run_dev_maga/seed_42/models/model2range.pth"))  # 2range except square
     # model.load_state_dict(torch.load(
     #     "./outputs/run_dev_maga/seed_42_070320251453/run_dev_maga/seed_42/models/model2range.pth"))  # 2range except ellipsis
+    # model.load_state_dict(torch.load(
+    #     "./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # 2element except ellipsis
     model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # 2element except ellipsis
+        "./outputs/run_dev_maga/seed_42_170320250845/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element except ellipsis
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()  # Set model to evaluation mode
@@ -140,5 +142,5 @@ def eval_compare_element_range():
     plt.show()
 
 if __name__ == "__main__":
-    # main()
-    eval_compare_element_range()
+    main()
+    # eval_compare_element_range()

@@ -16,8 +16,8 @@ def main():
     set_seed(args.seed)
 
     # load dataset
-    train_data = DspritesDataset("./data/2d/train2range.npz")
-    test_data = DspritesDataset("./data/2d/test2range.npz")
+    train_data = DspritesDataset("./data/2d/train.npz")
+    test_data = DspritesDataset("./data/2d/test.npz")
     train_loader, test_loader = get_dataloaders_2element(train_data, test_data,
                                                 batch_size=args.batch_size)
 
