@@ -13,8 +13,8 @@ seed: 42
 in_channels: 1
 img_size: 64
 latent_dim: 10
-beta_kl : 10
-beta_recon : 10
+beta_kl : 3
+beta_recon : 3
 
 ### ===== DATASET PARAMETERS =====
 train_ratio: 0.7
@@ -24,7 +24,7 @@ test_ratio: 0.3
 device: cuda
 batch_size: 64
 learning_rate: 0.0005
-n_epochs: 100
+n_epochs: 10
 
 eval_save_model_interval: 1
 eval_interval: 10

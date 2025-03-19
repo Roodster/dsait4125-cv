@@ -37,10 +37,17 @@ def main():
     #     "./outputs/run_dev_maga/seed_42_070320251453/run_dev_maga/seed_42/models/model2range.pth"))  # 2range except ellipsis
     # model.load_state_dict(torch.load(
     #     "./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # 2element except ellipsis
+    # model.load_state_dict(torch.load(
+    #     "./outputs/run_dev_maga/seed_42_170320250845/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 10
+    # model.load_state_dict(torch.load(
+    #     "./outputs/run_dev_maga/seed_42_170320251701/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 0.1
+    # model.load_state_dict(torch.load(
+    #     "./outputs/run_dev_maga/seed_42_170320252142/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 2
+    # model.load_state_dict(torch.load(
+    #     "./outputs/run_dev_maga/seed_42_170320252217/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 0
     model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_42_170320250845/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element except ellipsis
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
+        "./outputs/run_dev_maga/seed_42_190320250901/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 3
+    model = model.to(args.device)
     model.eval()  # Set model to evaluation mode
 
     loss_fn = MAGALoss(args)
@@ -50,7 +57,7 @@ def main():
     x1_sample = None  # Store x1 for visualization
     x2_sample = None  # Store x2 for visualization
     for batch_idx, (x1, x2) in enumerate(test_loader):
-        x1, x2 = x1.to(device), x2.to(device)  # Move tensors to GPU if available
+        x1, x2 = x1.to(args.device), x2.to(args.device)  # Move tensors to GPU if available
 
         z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
         z_recon = model.compute_z_reconstruction(x1, decoded_x1)
@@ -58,7 +65,7 @@ def main():
 
         running_loss += loss.item()
 
-        if batch_idx == 20:
+        if batch_idx == 18:
             generated_image = decoded_x1.cpu().detach().numpy().squeeze()
             x1_sample = x1.cpu().detach().numpy().squeeze()
             x2_sample = x2.cpu().detach().numpy().squeeze()
