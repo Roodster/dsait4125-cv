@@ -1,6 +1,6 @@
 import torch as th
 
-from ._base import BaseLearner
+from src.learners._base import BaseLearner
 
     
 class VAELearner(BaseLearner):
@@ -47,7 +47,7 @@ class VAELearner(BaseLearner):
         return results
 
     def evaluate(self, data_loader, results):
-        self.model.evalI()
+        self.model.eval()
         test_loss = 0.0
 
         metrics = {}

@@ -1,6 +1,6 @@
 import torch as th
 
-from ._base import BaseLearner
+from src.learners._base import BaseLearner
 
     
 class MAGALearner(BaseLearner):

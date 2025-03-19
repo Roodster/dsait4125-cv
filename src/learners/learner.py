@@ -1,7 +1,7 @@
 import torch as th
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 
-from ._base import BaseLearner
+from src.learners._base import BaseLearner
 
     
 class ClassificationLearner(BaseLearner):
