@@ -30,8 +30,8 @@ def main():
                             )
     
     # run experiment
-    experiment.run(train_loader=train_loader, test_loader=test_loader)
-    
+    # experiment.run(train_loader=train_loader, test_loader=test_loader)
+    experiment.eval(test_loader)
 
 
 

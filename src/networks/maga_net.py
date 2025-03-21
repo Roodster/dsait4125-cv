@@ -175,9 +175,9 @@ class MAGANet(nn.Module):
         decoded_x2 = self.decoder(z, x1)  # Decoder generates x2 using z and x1
         return z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2
 
-    def compute_z_reconstruction(self, x1, decoded_x1):
+    def compute_z_reconstruction(self, x1, decoded_x2):
         """Compute the reconstructed z given x1 and the decoded x1."""
-        z_recon, mu1, logvar1, mu_rec, logvar_rec = self.encoder(x1, decoded_x1)
+        z_recon, mu1, logvar1, mu_rec, logvar_rec = self.encoder(x1, decoded_x2)
         return z_recon
 
 def kl_divergence(mu, logvar):
