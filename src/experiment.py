@@ -48,6 +48,7 @@ class Experiment:
                 )
 
                 self.results.epochs = epoch
+                self.writer.save_model(self.learner.model, epoch=self.last_epoch)
             
         # Save the results statistics
         self.writer.save_statistics(self.results.get())

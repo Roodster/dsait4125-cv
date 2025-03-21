@@ -1,6 +1,8 @@
 import pathlib
 import numpy as np
 import os
+from PIL import Image
+
 def prepare_2d_data(file_path):
     data = np.load(file_path)
     images = data["imgs"][:]
@@ -18,7 +20,7 @@ def prepare_2d_data(file_path):
     ## pos = np.where(np.all(np.isclose(self.latents_values, key, atol=1e-2), axis=1))[0]
     pivot_index = 594095
     p_img = images[pivot_index]
-    pivot_image = np.tile(p_img, (images.shape[0], 1, 1))
+    # pivot_image = np.tile(p_img, (images.shape[0], 1, 1))
 
     total_size = len(images)
     values = latents_values
@@ -41,8 +43,10 @@ def prepare_2d_data(file_path):
 
     ## Save the split datasets
     os.makedirs(root, exist_ok=True)
-    np.savez(root / "train.npz", imgs=images[~mask],pivot_image=pivot_image[~mask], latents_values=values[~mask])
-    np.savez(root / "test.npz", imgs=images[mask], pivot_image=pivot_image[mask], latents_values=values[mask])
+    np.savez(root / "train.npz", imgs=images[~mask], pivot_image=p_img, latents_values=values[~mask])
+    np.savez(root / "test.npz", imgs=images[mask], pivot_image=p_img, latents_values=values[mask])
+    # np.savez(root / "train.npz", imgs=images[~mask],pivot_image=pivot_image[~mask], latents_values=values[~mask])
+    # np.savez(root / "test.npz", imgs=images[mask], pivot_image=pivot_image[mask], latents_values=values[mask])
     print("saved files")
 
 def prepare_2d_data_2range(file_path):
@@ -89,4 +93,4 @@ def prepare_2d_data_2range(file_path):
 
 if __name__ == "__main__":
     root = pathlib.Path(__file__).parent.parent / "data" / "2d"
-    prepare_2d_data_2range(root / "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz")
+    prepare_2d_data(root / "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz")
