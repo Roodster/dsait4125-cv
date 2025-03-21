@@ -46,7 +46,7 @@ def main():
     # model.load_state_dict(torch.load(
     #     "./outputs/run_dev_maga/seed_42_170320252217/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 0
     model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_42_190320250901/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 3
+        "./outputs/run_dev_maga/seed_42_190320252041/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 3
     model = model.to(args.device)
     model.eval()  # Set model to evaluation mode
 

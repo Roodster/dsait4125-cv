@@ -2,7 +2,7 @@ from tqdm import tqdm
 
 from src.writer import Writer
 from src.results import Results
-
+import matplotlib.pyplot as plt
 
 class Experiment:
     
@@ -54,3 +54,14 @@ class Experiment:
         self.writer.save_statistics(self.results.get())
         # save the network parameters
         self.writer.save_model(self.learner.model,epoch=self.last_epoch)
+
+    def eval(self, test_loader):
+        self.results = self.learner.evaluate(
+            data_loader=test_loader, results=self.results
+        )
+        print(self.results.test_losses)
+        imgs = self.results.generated_images
+        plt.figure()
+        plt.imshow(imgs[0][0],cmap='gray')
+        plt.show()
+

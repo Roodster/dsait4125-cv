@@ -70,7 +70,7 @@ class MAGALearner(BaseLearner):
         metrics['recon_losses'] = recon_loss / len(data_loader)
         metrics['recon_latent_losses'] = recon_latent_loss / len(data_loader)
         metrics['kl_losses'] = kl_loss / len(data_loader)
-
         results.update(metrics)
-
+        # metrics['generated_images'] = decoded_x1.cpu().detach().numpy()
+        results.generated_images = decoded_x1.cpu().detach().numpy().squeeze()
         return results

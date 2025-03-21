@@ -24,6 +24,7 @@ class Results:
         self._recon_losses = []
         self._recon_latent_losses = []
         self._kl_losses = []
+        self._generated_images = []
         
         # If a file is provided, read the data and populate the lists
         if file is not None:
@@ -225,3 +226,13 @@ class Results:
         if hasattr(value, 'item'):
             value = value.item()
         self._kl_losses.append(value)
+
+    @property
+    def generated_images(self):
+        return self._generated_images
+
+    @generated_images.setter
+    def generated_images(self, value):
+        # if hasattr(value, 'item'):
+        #     value = value
+        self._generated_images.append(value)

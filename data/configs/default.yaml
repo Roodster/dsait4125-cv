@@ -13,8 +13,8 @@ seed: 42
 in_channels: 1
 img_size: 64
 latent_dim: 10
-beta_kl : 3
-beta_recon : 3
+beta_kl : 2
+beta_recon : 300
 
 ### ===== DATASET PARAMETERS =====
 train_ratio: 0.7
@@ -31,3 +31,5 @@ eval_interval: 10
 eval_sample_rate: 1 # eval sampling rate is number of labels per second.
 
 save_model_name: model_2element
+
+load_model_path: ./outputs/run_dev_maga/seed_42_190320252041/run_dev_maga/seed_42/models/model_2element.pth
