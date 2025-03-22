@@ -11,12 +11,6 @@ class MAGALearner(BaseLearner):
                  optimizer=None,
                  criterion=None
                  ):
-        
-        assert args is not None, "No args defined."
-        assert model is not None, "No model defined."
-        assert optimizer is not None, "No optimizer defined."
-        assert criterion is not None, "No criterion defined."
-        
         super().__init__(args=args, model=model, optimizer=optimizer, criterion=criterion)
 
     def update(self, loss):
@@ -39,7 +33,7 @@ class MAGALearner(BaseLearner):
             x1, x2 = x1.to(self.args.device), x2.to(self.args.device)
 
             z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2 = self.model(x1, x2)      
-            z_recon = self.model.compute_z_reconstruction(x1, decoded_x1)
+            z_recon = self.model.compute_z_reconstruction(x1, decoded_x2)
             loss, recon_loss, recon_latent_loss, kl_loss = self.compute_loss(x2, z, mu1, logvar1, mu2, logvar2, decoded_x2, z_recon)    
             
             self.update(loss=loss)
@@ -70,7 +64,7 @@ class MAGALearner(BaseLearner):
         metrics['recon_losses'] = recon_loss / len(data_loader)
         metrics['recon_latent_losses'] = recon_latent_loss / len(data_loader)
         metrics['kl_losses'] = kl_loss / len(data_loader)
-
         results.update(metrics)
-
+        # metrics['generated_images'] = decoded_x1.cpu().detach().numpy()
+        results.generated_images = decoded_x1.cpu().detach().numpy().squeeze()
         return results

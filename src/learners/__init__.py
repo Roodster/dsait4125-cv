@@ -1,2 +1,10 @@
-from src.learners.maga_learner import MAGALearner
-from src.learners.learner import ClassificationLearner
+from .maga_learner import MAGALearner
+from .learner import ClassificationLearner
+from .vae_learner import VAELearner
+
+
+__all__ = [
+    'MAGALearner',
+    'ClassificationLearner',
+    'VAELearner'
+]

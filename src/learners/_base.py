@@ -1,3 +1,4 @@
+import torch
 
 class BaseLearner:
     def __init__(self, 
@@ -6,17 +7,25 @@ class BaseLearner:
                  optimizer=None,
                  criterion=None
                  ):
+
+        assert args is not None, "No args defined."
+        assert model is not None, "No model defined."
+        assert optimizer is not None, "No optimizer defined."
+        assert criterion is not None, "No criterion defined."
+        
         self.device = args.device
 
         # ===== DEPENDENCIES =====
         self.args = args
         self.model = model(args).to(self.args.device)
+        if args.load_model_path is not "":
+            self.model.load_state_dict(torch.load(args.load_model_path, weights_only=True))
         self.optimizer = optimizer(params=self.model.parameters(), lr=args.learning_rate)
 
         self.n_updates = 0
         self.n_epochs = args.n_epochs
         
-        if self.args.model_name in  ("maga"):
+        if self.args.model_name in  ("maga","vae"):
             self.criterion = criterion(args)
         else:
             self.criterion = criterion()
