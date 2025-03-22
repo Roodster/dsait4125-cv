@@ -11,6 +11,8 @@ __pycache__/
 
 # C extensions
 *.so
+*.sif
+.vscode
 
 # Distribution / packaging
 .Python
