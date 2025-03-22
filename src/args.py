@@ -14,7 +14,7 @@ class Args():
         
         # ===== METADATA =====
         self.exp_name = self.config.get("exp_name", "exp")
-        
+        self.mode = self.config.get("mode", "train")
         # ===== MODEL =====
         self.model_name = self.config.get("model_name", "model")
         self.latent_dim = self.config.get("latent_dim", 10)

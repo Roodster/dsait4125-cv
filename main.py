@@ -36,17 +36,16 @@ def main():
             batch_size=args.batch_size
         )
 
-    # dataset = BinarySyntheticDataset(num_classes=3, n_samples_per_class=100, img_size=64, pattern_type='geometric', seed=42, noise_prob=0.05)
-    # train_loader, test_loader, val_loader = get_dataloaders(dataset=dataset, train_ratio=0.7, test_ratio=0.2, batch_size=32)
-
     # initialize experiment
     experiment = Experiment(registry=registry, 
                             args=args 
                             )
     
     # run experiment
-    # experiment.run(train_loader=train_loader, test_loader=test_loader)
-    experiment.eval(test_loader)
+    if args.mode == 'train':
+        experiment.run(train_loader=train_loader, test_loader=test_loader)
+    elif args.mode == 'eval':
+        experiment.eval(test_loader)
 
 
 

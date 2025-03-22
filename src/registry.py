@@ -5,12 +5,6 @@ from src.learners import ClassificationLearner, MAGALearner, VAELearner
 from src.losses import MAGALoss, VAELoss
 
 REGISTRY = {
-    'base': {
-        'model': VisionModel,
-        'learner': ClassificationLearner,
-        'optimizer': th.optim.Adam,
-        'criterion': th.nn.CrossEntropyLoss
-    },
     'maga': {
         'model': MAGANet,
         'learner': MAGALearner,
