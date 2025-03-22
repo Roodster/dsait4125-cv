@@ -11,12 +11,6 @@ class MAGALearner(BaseLearner):
                  optimizer=None,
                  criterion=None
                  ):
-        
-        assert args is not None, "No args defined."
-        assert model is not None, "No model defined."
-        assert optimizer is not None, "No optimizer defined."
-        assert criterion is not None, "No criterion defined."
-        
         super().__init__(args=args, model=model, optimizer=optimizer, criterion=criterion)
 
     def update(self, loss):

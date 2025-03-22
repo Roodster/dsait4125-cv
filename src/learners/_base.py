@@ -7,6 +7,12 @@ class BaseLearner:
                  optimizer=None,
                  criterion=None
                  ):
+
+        assert args is not None, "No args defined."
+        assert model is not None, "No model defined."
+        assert optimizer is not None, "No optimizer defined."
+        assert criterion is not None, "No criterion defined."
+        
         self.device = args.device
 
         # ===== DEPENDENCIES =====
@@ -19,7 +25,7 @@ class BaseLearner:
         self.n_updates = 0
         self.n_epochs = args.n_epochs
         
-        if self.args.model_name in  ("maga"):
+        if self.args.model_name in  ("maga","vae"):
             self.criterion = criterion(args)
         else:
             self.criterion = criterion()

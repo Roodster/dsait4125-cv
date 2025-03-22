@@ -169,10 +169,10 @@ class BinarySyntheticDataset(Dataset):
         return self.data[idx], self.data[idx % len(self.data)] 
 
 class DspritesDataset(Dataset):
-    def __init__(self, file_path):
+    def __init__(self, file_path, single_output):
         # Load the .npz file
         data = np.load(file_path)
-
+        self.single_output = single_output
         self.images = data["imgs"][:]
         # plt.figure(figsize=(5, 5))
         # plt.imshow(self.images[0].squeeze(), cmap="gray")  # Use cmap="gray" for grayscale images
@@ -189,9 +189,10 @@ class DspritesDataset(Dataset):
     def __getitem__(self, idx):
         p_img = self.pivot_image
         v_img = self.images[idx]
-        pivot_image = torch.tensor(p_img.reshape(1,64,64), dtype=torch.float32)
-        varying_image = torch.tensor(v_img.reshape(1,64,64), dtype=torch.float32)
-        return pivot_image, varying_image
+        pivot_image = torch.tensor(p_img.reshape(1, 64, 64), dtype=torch.float32)
+        varying_image = torch.tensor(v_img.reshape(1, 64, 64), dtype=torch.float32)
+
+        return varying_image if self.single_output else (pivot_image, varying_image)
 
 # ============================== UTILITIES ==============================
 
