@@ -1,0 +1,57 @@
+Bootstrap: docker
+From: python:3.10-slim
+
+%files
+    requirements.txt /opt/requirements.txt
+
+%post
+    # Install system dependencies
+    apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
+        g++ \
+        libc6-dev \
+        libglu1-mesa-dev \
+        libgl1-mesa-dev \
+        libosmesa6-dev \
+        libglfw3 \
+        libgtk2.0-dev \
+        patchelf \
+        git \
+        build-essential \
+        && rm -rf /var/lib/apt/lists/* 
+
+    # Configure locale
+    apt-get update && apt-get install -y locales
+    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+    locale-gen
+
+    # Install Python packages globally
+    pip install --no-cache-dir -r /opt/requirements.txt
+
+%environment
+    export PYTHONPATH=/src:$PYTHONPATH
+    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+    export LANG=en_US.UTF-8
+    export LC_ALL=en_US.UTF-8
+
+%runscript
+    if [ ! -d "/src" ]; then
+        echo "Error: Source code directory (/src) not found!"
+        echo "Please bind mount your code directory using: -B /path/to/code:/src"
+        exit 1
+    fi
+
+    if [ ! -d "/outputs" ]; then
+        echo "Error: Outputs directory (/outputs) not found!"
+        echo "Please bind mount your outputs directory using: -B /path/to/outputs:/outputs"
+        exit 1
+    fi
+
+    if [ $# -eq 0 ]; then
+        echo "Error: No script specified."
+        echo "Usage: apptainer run mycontainer.sif <script.py> [args...]"
+        exit 1
+    fi
+
+    cd /src
+    exec python "$@"
