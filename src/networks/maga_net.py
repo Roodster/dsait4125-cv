@@ -1,22 +1,13 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
-from torch.distributions import Normal
-
-from src.args import Args
-from src.registry import setup
-from src.dataset import DspritesDataset, get_dataloaders_2element
-from src.common.utils import set_seed
-
-import matplotlib.pyplot as plt
 
 # Encoder Network
 class Encoder(nn.Module):
-    def __init__(self, latent_dim=10, input_channels=1):
+    def __init__(self, latent_dim=10, in_channels=1):
         super(Encoder, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(input_channels, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
+            nn.Conv2d(in_channels, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), nn.ReLU()
@@ -52,29 +43,29 @@ class Encoder(nn.Module):
         return z2-z1, mu1, logvar1, mu2, logvar2
 
 class ActNorm(nn.Module):
-    def __init__(self, num_channels):
+    def __init__(self, in_channels):
         super().__init__()
-        self.log_scale = nn.Parameter(torch.zeros(1, num_channels, 1, 1))
-        self.bias = nn.Parameter(torch.zeros(1, num_channels, 1, 1))
+        self.log_scale = nn.Parameter(torch.zeros(1, in_channels, 1, 1))
+        self.bias = nn.Parameter(torch.zeros(1, in_channels, 1, 1))
 
     def forward(self, x):
         return x * torch.exp(self.log_scale) + self.bias
 
 class Invertible1x1Conv(nn.Module):
-    def __init__(self, num_channels):
+    def __init__(self, in_channels):
         super().__init__()
-        self.weight = nn.Parameter(torch.eye(num_channels).unsqueeze(2).unsqueeze(3))  # Identity matrix
+        self.weight = nn.Parameter(torch.eye(in_channels).unsqueeze(2).unsqueeze(3))  # Identity matrix
 
     def forward(self, x):
         return nn.functional.conv2d(x, self.weight)
 
 class AdditiveCoupling(nn.Module):
-    def __init__(self, num_channels):
+    def __init__(self, in_channels):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Conv2d(num_channels // 2, num_channels // 2, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels // 2, in_channels // 2, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.Conv2d(num_channels // 2, num_channels // 2, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels // 2, in_channels // 2, kernel_size=3, padding=1),
         )
 
     def forward(self, x):
@@ -83,11 +74,11 @@ class AdditiveCoupling(nn.Module):
         return torch.cat([x1, x2], dim=1)
 
 class FlowStep(nn.Module):
-    def __init__(self, num_channels):
+    def __init__(self, in_channels):
         super().__init__()
-        self.act_norm = ActNorm(num_channels)
-        self.inv_conv = Invertible1x1Conv(num_channels)
-        self.coupling = AdditiveCoupling(num_channels)
+        self.act_norm = ActNorm(in_channels)
+        self.inv_conv = Invertible1x1Conv(in_channels)
+        self.coupling = AdditiveCoupling(in_channels)
 
     def forward(self, x):
         x = self.act_norm(x)
@@ -118,13 +109,13 @@ class UnsqueezeLayer(nn.Module):
 
 
 class FlowModule(nn.Module):
-    def __init__(self, num_channels):
+    def __init__(self, in_channels):
         super().__init__()
         self.squeeze = SqueezeLayer()
         self.flow_steps = nn.Sequential(
-            FlowStep(num_channels * 4),
-            FlowStep(num_channels * 4),
-            FlowStep(num_channels * 4),
+            FlowStep(in_channels * 4),
+            FlowStep(in_channels * 4),
+            FlowStep(in_channels * 4),
         )
 
     def forward(self, x):
@@ -135,9 +126,9 @@ class FlowModule(nn.Module):
 
 class Affine(nn.Module):
     """Affine applying x' + Mz transformation."""
-    def __init__(self, latent_dim, num_channels, height, width):
+    def __init__(self, latent_dim, in_channels, height, width):
         super().__init__()
-        self.fc_M = nn.Linear(latent_dim, num_channels * height * width)
+        self.fc_M = nn.Linear(latent_dim, in_channels * height * width)
 
     def forward(self, x, z):
         """ Apply affine transformation: x' + Mz """
@@ -149,14 +140,14 @@ class Affine(nn.Module):
 class FlowNet(nn.Module):
     """ Decoder that learns the group action α: Z × X → X """
 
-    def __init__(self, num_channels, latent_dim, height=64, width=64):
+    def __init__(self, in_channels, latent_dim, height=64, width=64):
         super().__init__()
-        self.affine = Affine(latent_dim, num_channels,height,width)  # Modulate x1 using z
+        self.affine = Affine(latent_dim, in_channels,height,width)  # Modulate x1 using z
 
         self.flow_modules = nn.Sequential(
-            FlowModule(num_channels),
-            FlowModule(num_channels * 4),
-            FlowModule(num_channels * 16),
+            FlowModule(in_channels),
+            FlowModule(in_channels * 4),
+            FlowModule(in_channels * 16),
         )
         self.unsqueeze = nn.Sequential(
             UnsqueezeLayer(),
@@ -173,15 +164,21 @@ class FlowNet(nn.Module):
 
 
 class MAGANet(nn.Module):
-    def __init__(self, in_channels=1, latent_dim=10):
+    def __init__(self, args):
         super().__init__()
-        self.encoder = Encoder(latent_dim,in_channels)
-        self.decoder = FlowNet(in_channels, latent_dim)
+        self.encoder = Encoder(latent_dim=args.latent_dim, in_channels=args.in_channels)
+        self.decoder = FlowNet(in_channels=args.in_channels, latent_dim=args.latent_dim)
 
     def forward(self, x1, x2):
         z, mu1, logvar1, mu2, logvar2 = self.encoder(x1, x2)
-        generated_x2 = self.decoder(z, x1)  # Decoder generates x2 using z and x1
-        return generated_x2, mu1, logvar1, mu2, logvar2
+        decoded_x1 = self.decoder(z, x1)
+        decoded_x2 = self.decoder(z, x1)  # Decoder generates x2 using z and x1
+        return z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2
+
+    def compute_z_reconstruction(self, x1, decoded_x2):
+        """Compute the reconstructed z given x1 and the decoded x1."""
+        z_recon, mu1, logvar1, mu_rec, logvar_rec = self.encoder(x1, decoded_x2)
+        return z_recon
 
 def kl_divergence(mu, logvar):
     """ Compute KL divergence loss """
@@ -194,57 +191,9 @@ def latent_reconstruction_loss(encoder, decoder, x, z):
     return torch.mean(torch.abs(z_reconstructed - z))  # L1 norm
 
 if __name__ == "__main__":
-    # Load arguments
-    args = Args(file="../../data/configs/default.yaml")
-    registry = setup(args.model_name)
-    set_seed(args.seed)
-
-    # load dataset
-    # dataset = SyntheticDataset(num_classes=2, n_samples_per_class=128, x_dim=3, y_dim=64, z_dim=64)
-    train_data = DspritesDataset("../../data/2d/train.npz")
-    test_data = DspritesDataset("../../data/2d/test.npz")
-    train_loader, test_loader = get_dataloaders_2element(train_data, test_data,
-                                                         batch_size=args.batch_size)
-
-
-    # Training Loop
-    latent_dim = 10
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    model = MAGANet(in_channels=1, latent_dim=10).cuda()  # Move to GPU if available
-    optimizer = optim.Adam(model.parameters(), lr=0.0005)  # Adam optimizer
-    loss_fn = nn.BCELoss()
-
-    num_epochs = 100
-    beta_kl = 300
-    beta_lr = 300
-
-    model.train()
-    print("Start Training")
-    for epoch in range(num_epochs):
-        running_loss = 0.0
-
-        for batch_idx, (x1, x2) in enumerate(train_loader):
-            # x1np = x1.numpy()
-            x1, x2 = x1.to(device), x2.to(device)  # Move tensors to GPU if available
-
-            optimizer.zero_grad()  # Zero gradients
-
-            x_transformed, mu1, logvar1, mu2, logvar2 = model(x1, x2)  # Forward pass
-
-            loss_bce = loss_fn(x_transformed, x2)  # Compute BCE loss
-            loss_kl = kl_divergence(mu1, logvar1) + kl_divergence(mu2, logvar2)  # KL loss
-
-            loss_recon_latent = latent_reconstruction_loss(model.encoder, model.decoder, x1, mu1)  # latent_reconstruction_loss
-
-            # Final loss function
-            loss = loss_bce + beta_kl * loss_kl + beta_lr * loss_recon_latent
-            loss.backward()  # Backpropagation
-            optimizer.step()  # Update weights
-
-            running_loss += loss.item()
-
-        avg_loss = running_loss / len(train_loader)
-        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}")
-
-    torch.save(model.state_dict(), "../../outputs/magan_model.pth")
+    from types import SimpleNamespace
+    args = SimpleNamespace(in_channels=1, latent_dim=10)
+    model = MAGANet(args)
+    x1 = torch.randn(1, 1, 64, 64)
+    x2 = torch.randn(1, 1, 64, 64)
+    print(model(x1, x2))
