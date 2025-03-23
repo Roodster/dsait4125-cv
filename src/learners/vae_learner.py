@@ -49,6 +49,8 @@ class VAELearner(BaseLearner):
     def evaluate(self, data_loader, results):
         self.model.eval()
         test_loss = 0.0
+        test_kl_loss = 0.0
+        test_recon_loss = 0.0
 
         metrics = {}
 
@@ -58,13 +60,15 @@ class VAELearner(BaseLearner):
                 x = x.to(self.args.device)
 
                 recon_x, mu, logvar = self.model(x)
-                loss, recon_loss, kl_loss = self.compute_loss(recon_x, mu, logvar)
-                test_loss +=loss.item()
+                loss, recon_loss, kl_loss = self.compute_loss(x, mu, logvar, recon_x)
+                test_loss += loss.item()
+                test_kl_loss += kl_loss.item()
+                test_recon_loss += recon_loss.item()
 
         metrics['test_losses'] = test_loss / len(data_loader)
-        metrics['recon_losses'] = recon_loss / len(data_loader)
-        metrics['kl_losses'] = kl_loss / len(data_loader)
-
+        metrics['test_recon_losses'] = test_recon_loss / len(data_loader)
+        metrics['test_kl_losses'] = test_kl_loss / len(data_loader)
+        results.generated_images = recon_x.cpu().detach().numpy().squeeze()
         results.update(metrics)
 
         return results

@@ -18,8 +18,10 @@ class BaseLearner:
         # ===== DEPENDENCIES =====
         self.args = args
         self.model = model(args).to(self.args.device)
-        if args.load_model_path is not "":
+        
+        if len(args.load_model_path) > 0:
             self.model.load_state_dict(torch.load(args.load_model_path, weights_only=True))
+
         self.optimizer = optimizer(params=self.model.parameters(), lr=args.learning_rate)
 
         self.n_updates = 0

@@ -21,9 +21,13 @@ class Results:
         self._precisions = []
         self._aucs = []
         self._f1s = []
-        self._recon_losses = []
-        self._recon_latent_losses = []
-        self._kl_losses = []
+        self._train_kl_losses = []
+        self._train_recon_losses = []
+        self._train_recon_latent_losses = []
+        self._test_recon_losses = []
+        self._test_recon_latent_losses = []
+        self._test_kl_losses = []
+
         self._generated_images = []
         
         # If a file is provided, read the data and populate the lists
@@ -95,29 +99,6 @@ class Results:
             else:
                 setattr(self, internal_name, value)
 
-    # Property and setter for train_losses
-    @property
-    def train_losses(self):
-        return self._train_losses 
-    
-    @train_losses.setter
-    def train_losses(self, value):
-        # Ensure we're storing raw values, not tensors
-        if hasattr(value, 'item'):
-            value = value.item()
-        self._train_losses.append(value)
-
-    # Property and setter for test_losses
-    @property
-    def test_losses(self):        
-        return self._test_losses 
-    
-    @test_losses.setter
-    def test_losses(self, value):
-        # Ensure we're storing raw values, not tensors
-        if hasattr(value, 'item'):
-            value = value.item()
-        self._test_losses.append(value)
 
     # Property and setter for epochs
     @property
@@ -130,6 +111,113 @@ class Results:
         if hasattr(value, 'item'):
             value = value.item()
         self._epochs.append(value)
+
+    # Property and setter for train_losses
+    @property
+    def train_losses(self):
+        return self._train_losses 
+        
+    
+    @train_losses.setter
+    def train_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._train_losses.append(value)
+        
+    # Property and setter for recon_losses
+    @property
+    def train_recon_losses(self):
+        return self._test_recon_losses
+    
+    @train_recon_losses.setter
+    def train_recon_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._train_recon_losses.append(value)
+        
+    # Property and setter for recon_latent_losses
+    @property
+    def train_recon_latent_losses(self):
+        return self._train_recon_latent_losses
+    
+    @train_recon_latent_losses.setter
+    def train_recon_latent_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._train_recon_latent_losses.append(value)
+        
+    # Property and setter for kl_losses
+    @property
+    def train_kl_losses(self):
+        return self._train_kl_losses
+    
+    @train_kl_losses.setter
+    def train_kl_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._train_kl_losses.append(value)
+        
+    # Property and setter for test_losses
+    @property
+    def test_losses(self):        
+        return self._test_losses 
+    
+    @test_losses.setter
+    def test_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._test_losses.append(value)
+
+    # Property and setter for recon_losses
+    @property
+    def test_recon_losses(self):
+        return self._test_recon_losses
+    
+    @test_recon_losses.setter
+    def test_recon_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._test_recon_losses.append(value)
+        
+    # Property and setter for recon_latent_losses
+    @property
+    def test_recon_latent_losses(self):
+        return self._test_recon_latent_losses
+    
+    @test_recon_latent_losses.setter
+    def test_recon_latent_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._test_recon_latent_losses.append(value)
+        
+    # Property and setter for kl_losses
+    @property
+    def test_kl_losses(self):
+        return self._test_kl_losses
+    
+    @test_kl_losses.setter
+    def test_kl_losses(self, value):
+        # Ensure we're storing raw values, not tensors
+        if hasattr(value, 'item'):
+            value = value.item()
+        self._test_kl_losses.append(value)
+
+    @property
+    def generated_images(self):
+        return self._generated_images
+
+    @generated_images.setter
+    def generated_images(self, value):
+        # if hasattr(value, 'item'):
+        #     value = value
+        self._generated_images.append(value)
 
     # Property and setter for accuracies
     @property
@@ -190,49 +278,3 @@ class Results:
         if hasattr(value, 'item'):
             value = value.item()
         self._f1s.append(value)
-        
-    # Property and setter for recon_losses
-    @property
-    def recon_losses(self):
-        return self._recon_losses
-    
-    @recon_losses.setter
-    def recon_losses(self, value):
-        # Ensure we're storing raw values, not tensors
-        if hasattr(value, 'item'):
-            value = value.item()
-        self._recon_losses.append(value)
-        
-    # Property and setter for recon_latent_losses
-    @property
-    def recon_latent_losses(self):
-        return self._recon_latent_losses
-    
-    @recon_latent_losses.setter
-    def recon_latent_losses(self, value):
-        # Ensure we're storing raw values, not tensors
-        if hasattr(value, 'item'):
-            value = value.item()
-        self._recon_latent_losses.append(value)
-        
-    # Property and setter for kl_losses
-    @property
-    def kl_losses(self):
-        return self._kl_losses
-    
-    @kl_losses.setter
-    def kl_losses(self, value):
-        # Ensure we're storing raw values, not tensors
-        if hasattr(value, 'item'):
-            value = value.item()
-        self._kl_losses.append(value)
-
-    @property
-    def generated_images(self):
-        return self._generated_images
-
-    @generated_images.setter
-    def generated_images(self, value):
-        # if hasattr(value, 'item'):
-        #     value = value
-        self._generated_images.append(value)

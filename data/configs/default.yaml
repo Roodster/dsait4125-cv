@@ -7,7 +7,7 @@ log_dir: ./outputs
 # ===== EXPERIMENT ====
 model_name: maga
 seed: 42
-
+mode: train
 
 # ===== MODEL PARAMETERS =====
 in_channels: 1
@@ -24,7 +24,7 @@ test_ratio: 0.3
 device: cuda
 batch_size: 64
 learning_rate: 0.0005
-n_epochs: 10
+n_epochs: 1
 
 eval_save_model_interval: 1
 eval_interval: 10
@@ -32,4 +32,4 @@ eval_sample_rate: 1 # eval sampling rate is number of labels per second.
 
 save_model_name: model_2element
 
-load_model_path: ./outputs/run_dev_maga/seed_42_190320252041/run_dev_maga/seed_42/models/model_2element.pth
+load_model_path: ""

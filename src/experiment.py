@@ -62,6 +62,7 @@ class Experiment:
         print(self.results.test_losses)
         imgs = self.results.generated_images
         plt.figure()
+        print(imgs)
         plt.imshow(imgs[0][0],cmap='gray')
         plt.show()
 
