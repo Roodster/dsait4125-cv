@@ -31,7 +31,7 @@ class Results:
         self._generated_images = []
         
         # If a file is provided, read the data and populate the lists
-        if file is not None:
+        if len(file) > 0:
             self._prev_results = pd.read_csv(file)
             
             # Populate the lists with data from the dataframe
