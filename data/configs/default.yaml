@@ -6,7 +6,7 @@ log_dir: ./outputs
 
 # ===== EXPERIMENT ====
 model_name: maga
-seed: 1
+seed: 2
 mode: train
 
 # ===== MODEL PARAMETERS =====
@@ -31,5 +31,5 @@ eval_interval: 1
 
 save_model_name: model_2element
 
-load_model_path: "/home/prometheus/tudelft/dsait4125-cv/outputs/run_dev_maga/seed_1_230320251611/models/model_2element.pth"
-checkpoint_file: "/home/prometheus/tudelft/dsait4125-cv/outputs/run_dev_maga/seed_1_230320251611/stats.csv"
+load_model_path: ""
+checkpoint_file: ""
