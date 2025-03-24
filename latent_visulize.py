@@ -2,11 +2,14 @@ from array import array
 
 import numpy as np
 import torch
+from sklearn.utils import shuffle
 
 from src.args import Args
 from src.networks.maga_net import MAGANet
 from src.registry import setup
 from src.common.utils import set_seed
+from src.dataset import DspritesDataset, get_dataloaders_2element
+
 import matplotlib.pyplot as plt
 # from sklearn.cluster import DBSCAN
 from sklearn.manifold import TSNE
@@ -84,62 +87,54 @@ def get_mask(file_path, mask_num):
     result = mask
     return result
 
-def encode_img(file_path):
-    data = np.load(file_path)
-    images = data["imgs"][:]
-    latents_values = data["latents_values"][:]
-    # np.save("./outputs/latent_vir_gt", latents_values)
-    # color, shape, scale, orientation, pos_x, pos_y
-    # shape: square1, ellipse2, heart3
-
-    ## the pivot image under different x position
-    # key = np.array([[1.,3.,0.7,3.22,0.16,0.48]])
-    # pivot_index = 594095
-    # key = np.array([[1.,3.,0.7,3.22,0.0,0.48]])
-    # pivot_index = 593935
-    # key = np.array([[1.,3.,0.7,3.22,0.48,0.48]])
-    # pivot_index = 594415
-    ## pos = np.where(np.all(np.isclose(self.latents_values, key, atol=1e-2), axis=1))[0]
-    pivot_index = 594095
-    p_img = images[pivot_index]
-    # color, shape, scale, orientation, pos_x, pos_y
-
-    p_img = torch.tensor(p_img.reshape(1,1, 64, 64), dtype=torch.float32)
-    imgs = torch.tensor(images.reshape(-1, 1, 64, 64), dtype=torch.float32)
-    # result = torch.tensor(result.reshape(-1,1, 64, 64), dtype=torch.float32)
-
-    # Load arguments
+def encode_img(train_loader, test_loader, model):
     args = Args(file="./data/configs/default.yaml")
-    registry = setup(args.model_name)
-    set_seed(args.seed)
-    model = MAGANet(args)  # Reinitialize model
-    # model.load_state_dict(torch.load(
-    #     "./outputs/run_dev_maga/seed_42_010320251008/run_dev_maga/seed_42/models/model.pth"))  # 2element model
-    model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_42_100320251508/run_dev_maga/seed_42/models/model2range.pth"))  # 2range model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
-    p_img = p_img.to(device)
-    # imgs1 = imgs[:200000].to(device)
-    # imgs2 = imgs[200000:400000].to(device)
-    # imgs3 = imgs[400000:].to(device)
-    # imgs = imgs.to(device)
     model.eval()  # Set model to evaluation mode
 
     latent_vir = []
-    for i in range(imgs.shape[0]):
-        temp_i = imgs[i].reshape(1, 1, 64, 64)
-        temp_i = temp_i.to(device)
-        z, mu1, logvar1, mu2, logvar2 = model.encoder(p_img, temp_i)
+
+    for batch_idx, (x1, x2) in enumerate(test_loader):
+        x1, x2 = x1.to(args.device), x2.to(args.device)  # Move tensors to GPU if available
+        z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
         latent_vir.append(z.detach().cpu().numpy())
 
-    z = np.array(latent_vir).squeeze()
-    np.save("./outputs/latent_vir_2range", z)
+    for batch_idx, (x1, x2) in enumerate(train_loader):
+        x1, x2 = x1.to(args.device), x2.to(args.device)  # Move tensors to GPU if available
+        z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
+        latent_vir.append(z.detach().cpu().numpy())
+
+    z = np.vstack(latent_vir)
+    np.save("./outputs/latent_vir", z)
     print("result saved")
     return
 
+def generate_files():
+    args = Args(file="./data/configs/default.yaml")
+
+    train_data = DspritesDataset("./data/2d/train.npz", single_output=False)
+    test_data = DspritesDataset("./data/2d/test.npz", single_output=False)
+
+    z_gt = np.concatenate([test_data.latents_values,train_data.latents_values])
+    np.save("./outputs/latent_vir_gt", z_gt)
+    print("ground truth latent value saved")
+
+    train_loader, test_loader = get_dataloaders_2element(
+        train_data, test_data,
+        batch_size=args.batch_size,
+        shuffle=False
+    )
+
+    model = MAGANet(args)
+    model.load_state_dict(torch.load(
+        "./outputs/run_dev_maga/seed_2_240320251900/models/model_2element.pth"))
+    model = model.to(args.device)
+
+    encode_img(train_loader, test_loader, model)
+
+
 if __name__ == "__main__":
-    # encode_img('./data/2d/dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz')
+    generate_files()
+
     z = np.load("./outputs/latent_vir.npy")
     # z = np.load("./outputs/latent_vir_2range.npy")
     z_gt = np.load("./outputs/latent_vir_gt.npy")
