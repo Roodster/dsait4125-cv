@@ -198,7 +198,7 @@ class DspritesDataset(Dataset):
 
 def split_dataset_2element(train_data,test_data, batch_size=32, shuffle=True, num_workers=1):
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     return train_loader, test_loader
 
 def split_dataset(dataset, train_ratio=0.7, test_ratio=0.15, batch_size=32, shuffle=True, num_workers=1):
