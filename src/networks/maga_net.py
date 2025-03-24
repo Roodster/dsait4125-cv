@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+from src.networks.vae import Encoder as VAEEncoder
+
 # Encoder Network
 class Encoder(nn.Module):
     def __init__(self, latent_dim=10, in_channels=1):
@@ -47,20 +50,8 @@ class Encoder(nn.Module):
 class AblationEncoder(nn.Module):
     def __init__(self, latent_dim=10, in_channels=1):
         super(AblationEncoder, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=4, stride=2, padding=1),  # 64x64 -> 32x32
-            nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1),  # 32x32 -> 16x16
-            nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),  # 16x16 -> 8x8
-            nn.ReLU(),
-            nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),  # 8x8 -> 4x4
-            nn.ReLU(),
-            nn.Flatten()  # Flatten before passing to FC layers
-        )
-
-        self.fc_mu = nn.Linear(4 * 4 * 256, latent_dim)  # Mean of latent distribution
-        self.fc_logvar = nn.Linear(4 * 4 * 256, latent_dim)  # Log-variance
+        
+        self.encoder = VAEEncoder(latent_dim=latent_dim)
 
     def sample_z(self, mu, logvar):
         std = torch.exp(0.5 * logvar)  # Convert log-variance to standard deviation
@@ -68,13 +59,8 @@ class AblationEncoder(nn.Module):
         return mu + eps * std
 
     def forward(self, x1, x2):
-        h1 = self.conv(x1)  # Extract features
-        mu1 = self.fc_mu(h1)  # Get mean
-        logvar1 = self.fc_logvar(h1)  # Get log-variance
-
-        h2 = self.conv(x2)  # Extract features
-        mu2 = self.fc_mu(h2)  # Get mean
-        logvar2 = self.fc_logvar(h2)  # Get log-variance
+        mu1, logvar1 = self.encoder(x1)
+        mu2, logvar2 = self.encoder(x2)
 
         z1 = self.sample_z(mu1,logvar1)
         z2 = self.sample_z(mu2,logvar2)

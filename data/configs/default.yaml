@@ -5,7 +5,7 @@ exp_name: prod
 log_dir: ./outputs
 
 # ===== EXPERIMENT ====
-model_name: maga-abl
+model_name: maga
 seed: 2
 mode: train
 
@@ -24,7 +24,7 @@ test_ratio: 0.3
 device: cuda
 batch_size: 64
 learning_rate: 0.0005
-n_epochs: 1
+n_epochs: 100
 
 eval_save_model_interval: 1
 eval_interval: 1
