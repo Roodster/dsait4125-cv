@@ -42,6 +42,46 @@ class Encoder(nn.Module):
         z2 = self.sample_z(mu2,logvar2)
         return z2-z1, mu1, logvar1, mu2, logvar2
 
+
+# Encoder Network
+class AblationEncoder(nn.Module):
+    def __init__(self, latent_dim=10, in_channels=1):
+        super(AblationEncoder, self).__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=4, stride=2, padding=1),  # 64x64 -> 32x32
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1),  # 32x32 -> 16x16
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),  # 16x16 -> 8x8
+            nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),  # 8x8 -> 4x4
+            nn.ReLU(),
+            nn.Flatten()  # Flatten before passing to FC layers
+        )
+
+        self.fc_mu = nn.Linear(4 * 4 * 256, latent_dim)  # Mean of latent distribution
+        self.fc_logvar = nn.Linear(4 * 4 * 256, latent_dim)  # Log-variance
+
+    def sample_z(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)  # Convert log-variance to standard deviation
+        eps = torch.randn_like(std)  # Sample from N(0, I)
+        return mu + eps * std
+
+    def forward(self, x1, x2):
+        h1 = self.conv(x1)  # Extract features
+        mu1 = self.fc_mu(h1)  # Get mean
+        logvar1 = self.fc_logvar(h1)  # Get log-variance
+
+        h2 = self.conv(x2)  # Extract features
+        mu2 = self.fc_mu(h2)  # Get mean
+        logvar2 = self.fc_logvar(h2)  # Get log-variance
+
+        z1 = self.sample_z(mu1,logvar1)
+        z2 = self.sample_z(mu2,logvar2)
+
+        return z2-z1, mu1, logvar1, mu2, logvar2
+
+
 class ActNorm(nn.Module):
     def __init__(self, in_channels):
         super().__init__()
@@ -179,6 +219,25 @@ class MAGANet(nn.Module):
         """Compute the reconstructed z given x1 and the decoded x1."""
         z_recon, mu1, logvar1, mu_rec, logvar_rec = self.encoder(x1, decoded_x2)
         return z_recon
+
+
+class AblationMAGANet(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.encoder = AblationEncoder(latent_dim=args.latent_dim, in_channels=args.in_channels)
+        self.decoder = FlowNet(in_channels=args.in_channels, latent_dim=args.latent_dim)
+
+    def forward(self, x1, x2):
+        z, mu1, logvar1, mu2, logvar2 = self.encoder(x1, x2)
+        decoded_x1 = self.decoder(z, x1)
+        decoded_x2 = self.decoder(z, x1)  # Decoder generates x2 using z and x1
+        return z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2
+
+    def compute_z_reconstruction(self, x1, decoded_x2):
+        """Compute the reconstructed z given x1 and the decoded x1."""
+        z_recon, mu1, logvar1, mu_rec, logvar_rec = self.encoder(x1, decoded_x2)
+        return z_recon
+
 
 def kl_divergence(mu, logvar):
     """ Compute KL divergence loss """

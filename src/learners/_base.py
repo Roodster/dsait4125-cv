@@ -27,7 +27,7 @@ class BaseLearner:
         self.n_updates = 0
         self.n_epochs = args.n_epochs
         
-        if self.args.model_name in  ("maga","vae"):
+        if self.args.model_name in  ("maga","vae", 'maga-abl'):
             self.criterion = criterion(args)
         else:
             self.criterion = criterion()

@@ -1,11 +1,11 @@
 ### METADATA
-exp_name: dev
+exp_name: prod
 
 # ===== FILE HANDLING =====
 log_dir: ./outputs
 
 # ===== EXPERIMENT ====
-model_name: maga
+model_name: maga-abl
 seed: 2
 mode: train
 
@@ -24,12 +24,14 @@ test_ratio: 0.3
 device: cuda
 batch_size: 64
 learning_rate: 0.0005
-n_epochs: 40
+n_epochs: 1
 
 eval_save_model_interval: 1
 eval_interval: 1
 
-save_model_name: model_2element
+save_model_name: model_2element_abl
 
+
+experiment_dir: ""
 load_model_path: ""
 checkpoint_file: ""

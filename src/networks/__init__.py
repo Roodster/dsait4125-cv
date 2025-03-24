@@ -1,6 +1,6 @@
 from .inference import InferenceModel
 from .vision import VisionModel
-from .maga_net import MAGANet
+from .maga_net import MAGANet, AblationMAGANet
 from .vae import VAE
 
 __all__ = [
