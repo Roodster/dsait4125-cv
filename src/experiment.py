@@ -10,7 +10,7 @@ class Experiment:
             # ===== DEPENDNCIES =====
             self.args = args
             self.learner = registry['learner'](args=args, model=registry['model'], optimizer=registry['optimizer'], criterion=registry['criterion'])
-            self.results = Results(verbose=False)
+            self.results = Results(file=args.checkpoint_file, verbose=False)
             self.writer = Writer(args=args)
             
             self.start_epochs = len(self.results.epochs) if self.results else None
@@ -49,9 +49,9 @@ class Experiment:
 
                 self.results.epochs = epoch
                 self.writer.save_model(self.learner.model, epoch=self.last_epoch)
-            
-        # Save the results statistics
-        self.writer.save_statistics(self.results.get())
+                # Save the results statistics
+                self.writer.save_statistics(self.results.get())
+                
         # save the network parameters
         self.writer.save_model(self.learner.model,epoch=self.last_epoch)
 

@@ -26,13 +26,9 @@ class Writer():
         self.args = args
         # self.datetime = str(dt.datetime.now().strftime("%d%m%Y%H%M"))
         self.root = args.log_dir
-        self.base_dir = self.root + f"/run_{args.exp_name}_{args.model_name}"
-        self.train_dir = self.base_dir + f"/seed_{args.seed}"
-        self.eval_dir = self.train_dir + f"/evaluation"
-        self.model_dir = self.train_dir + "/models"
-        
-        self._create_directories(self.base_dir)
-        self._create_directories(self.train_dir)
+        self.eval_dir = self.root + f"/evaluation"
+        self.model_dir = self.root + "/models"
+        self._create_directories(self.root)
         self._create_directories(self.eval_dir)
         self._create_directories(self.model_dir)
 
@@ -53,19 +49,19 @@ class Writer():
     def save_plot(self, plot, attribute):
         filepath = f"/plot_{attribute}.png"
         
-        plot_path = self.train_dir + filepath
+        plot_path = self.eval_dir + filepath
         
         plot.savefig(plot_path)
     
     def save_statistics(self, statistics):
         filepath = f"/stats.csv"
-        stats_path = self.train_dir + filepath
+        stats_path = self.root + filepath
         statistics.to_csv(stats_path, index=False)
             
     def save_hyperparameters(self, hyperparameters):
         filepath = f"/hyperparameters.yaml"
 
-        hyperparams_path = self.train_dir + filepath
+        hyperparams_path = self.root + filepath
         with open(hyperparams_path, 'w') as f:
             json.dump(hyperparameters.__dict__,
                       f,

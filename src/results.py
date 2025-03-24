@@ -36,7 +36,7 @@ class Results:
             
             # Populate the lists with data from the dataframe
             for column in self._prev_results.columns:
-                attr_name = f"_{column}s" if not column.endswith('s') else f"_{column}"
+                attr_name = f"_{column}"
                 if hasattr(self, attr_name):
                     setattr(self, attr_name, self._prev_results[column].tolist())
 
@@ -50,7 +50,9 @@ class Results:
         """Returns a dictionary with metrics that have the same length."""
         # Get all attribute names that start with underscore and are lists
         metric_attrs = {attr: getattr(self, attr) for attr in dir(self) 
-                       if attr.startswith('_') and isinstance(getattr(self, attr), list)}
+                       if attr.startswith('_') and 
+                       isinstance(getattr(self, attr), list) and
+                       attr != "_generated_images"}
         
         # Find the most common length among non-empty lists
         lengths = [len(val) for val in metric_attrs.values() if len(val) > 0]
