@@ -51,7 +51,7 @@ class AblationEncoder(nn.Module):
     def __init__(self, latent_dim=10, in_channels=1):
         super(AblationEncoder, self).__init__()
         
-        self.conv = Encoder(latent_dim=latent_dim).conv
+        self.encoder = Encoder(latent_dim=latent_dim)
         
 
     def sample_z(self, mu, logvar):
