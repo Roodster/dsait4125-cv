@@ -51,7 +51,8 @@ class AblationEncoder(nn.Module):
     def __init__(self, latent_dim=10, in_channels=1):
         super(AblationEncoder, self).__init__()
         
-        self.encoder = VAEEncoder(latent_dim=latent_dim)
+        self.conv = Encoder(latent_dim=latent_dim).conv
+        
 
     def sample_z(self, mu, logvar):
         std = torch.exp(0.5 * logvar)  # Convert log-variance to standard deviation
@@ -197,32 +198,30 @@ class MAGANet(nn.Module):
 
     def forward(self, x1, x2):
         z, mu1, logvar1, mu2, logvar2 = self.encoder(x1, x2)
-        decoded_x1 = self.decoder(z, x1)
         decoded_x2 = self.decoder(z, x1)  # Decoder generates x2 using z and x1
-        return z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2
+        return z, mu1, logvar1, mu2, logvar2, decoded_x2
 
     def compute_z_reconstruction(self, x1, decoded_x2):
         """Compute the reconstructed z given x1 and the decoded x1."""
         z_recon, mu1, logvar1, mu_rec, logvar_rec = self.encoder(x1, decoded_x2)
         return z_recon
+    
+    def encode(self, x1, x2):
+        z, mu1, logvar1, mu2, logvar2 = self.encoder(x1, x2)
+
+    
+    def decode(self, x1, z):
+        return self.decoder(z, x1)
 
 
-class AblationMAGANet(nn.Module):
+        
+
+
+class AblationMAGANet(MAGANet):
     def __init__(self, args):
         super().__init__()
         self.encoder = AblationEncoder(latent_dim=args.latent_dim, in_channels=args.in_channels)
         self.decoder = FlowNet(in_channels=args.in_channels, latent_dim=args.latent_dim)
-
-    def forward(self, x1, x2):
-        z, mu1, logvar1, mu2, logvar2 = self.encoder(x1, x2)
-        decoded_x1 = self.decoder(z, x1)
-        decoded_x2 = self.decoder(z, x1)  # Decoder generates x2 using z and x1
-        return z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2
-
-    def compute_z_reconstruction(self, x1, decoded_x2):
-        """Compute the reconstructed z given x1 and the decoded x1."""
-        z_recon, mu1, logvar1, mu_rec, logvar_rec = self.encoder(x1, decoded_x2)
-        return z_recon
 
 
 def kl_divergence(mu, logvar):
