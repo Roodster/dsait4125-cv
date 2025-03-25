@@ -5,6 +5,7 @@ import torch
 from sklearn.utils import shuffle
 
 from src.args import Args
+from src.networks import VAE
 from src.networks.maga_net import MAGANet
 from src.registry import setup
 from src.common.utils import set_seed
@@ -87,32 +88,46 @@ def get_mask(file_path, mask_num):
     result = mask
     return result
 
-def encode_img(train_loader, test_loader, model):
-    args = Args(file="./data/configs/default.yaml")
+def encode_img(train_loader, test_loader, model, args):
     model.eval()  # Set model to evaluation mode
 
     latent_vir = []
 
-    for batch_idx, (x1, x2) in enumerate(test_loader):
-        x1, x2 = x1.to(args.device), x2.to(args.device)  # Move tensors to GPU if available
-        z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
-        latent_vir.append(z.detach().cpu().numpy())
+    single_output = args.model_name == "vae"
+    if single_output:
+        for batch_idx, x1 in enumerate(test_loader):
+            x1 = x1.to(args.device)  # Move tensors to GPU if available
+            x, mu, logvar = model(x1)  # Forward pass
+            z = model.reparameterize(mu, logvar)
+            latent_vir.append(z.detach().cpu().numpy())
 
-    for batch_idx, (x1, x2) in enumerate(train_loader):
-        x1, x2 = x1.to(args.device), x2.to(args.device)  # Move tensors to GPU if available
-        z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
-        latent_vir.append(z.detach().cpu().numpy())
+        for batch_idx, x1 in enumerate(train_loader):
+            x1 = x1.to(args.device)  # Move tensors to GPU if available
+            x, mu, logvar = model(x1)  # Forward pass
+            z = model.reparameterize(mu, logvar)
+            latent_vir.append(z.detach().cpu().numpy())
+    else:
+        for batch_idx, (x1, x2) in enumerate(test_loader):
+            x1, x2 = x1.to(args.device), x2.to(args.device)  # Move tensors to GPU if available
+            z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
+            latent_vir.append(z.detach().cpu().numpy())
+
+        for batch_idx, (x1, x2) in enumerate(train_loader):
+            x1, x2 = x1.to(args.device), x2.to(args.device)  # Move tensors to GPU if available
+            z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
+            latent_vir.append(z.detach().cpu().numpy())
 
     z = np.vstack(latent_vir)
     np.save("./outputs/latent_vir", z)
     print("result saved")
     return
 
-def generate_files():
-    args = Args(file="./data/configs/default.yaml")
+def generate_files(path):
+    args = Args(file=f"{path}/hyperparameters.yaml")
 
-    train_data = DspritesDataset("./data/2d/train.npz", single_output=False)
-    test_data = DspritesDataset("./data/2d/test.npz", single_output=False)
+    single_output = args.model_name == "vae"
+    train_data = DspritesDataset("./data/2d/train.npz", single_output=single_output)
+    test_data = DspritesDataset("./data/2d/test.npz", single_output=single_output)
 
     z_gt = np.concatenate([test_data.latents_values,train_data.latents_values])
     np.save("./outputs/latent_vir_gt", z_gt)
@@ -124,16 +139,23 @@ def generate_files():
         shuffle=False
     )
 
-    model = MAGANet(args)
-    model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_2_240320251900/models/model_2element.pth"))
-    model = model.to(args.device)
+    if args.model_name == "maga":
+        model = MAGANet(args)
+        model.load_state_dict(torch.load(
+            f"{path}/models/model_2element.pth"))
+        model = model.to(args.device)
+    elif args.model_name == "vae":
+        model = VAE(args)
+        model.load_state_dict(torch.load(
+            f"{path}/models/model_2element.pth"))
+        model = model.to(args.device)
 
-    encode_img(train_loader, test_loader, model)
+
+    encode_img(train_loader, test_loader, model, args)
 
 
 if __name__ == "__main__":
-    generate_files()
+    generate_files("./outputs/run_dev_maga/seed_2_250320250829")
 
     z = np.load("./outputs/latent_vir.npy")
     # z = np.load("./outputs/latent_vir_2range.npy")
