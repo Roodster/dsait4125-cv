@@ -3,6 +3,7 @@
         Reads parameter file and returns arguments in class format.
 """
 
+import os
 import torch as th
 from src.common.utils import parse_args
 from datetime import datetime
@@ -50,7 +51,22 @@ class Args():
         self.log_dir = self.config.get("log_dir", "./outputs") + f"/run_{self.exp_name}_{self.model_name}/seed_{self.seed}_{datetime.now().strftime('%d%m%Y%H%M')}"
         self.save_model_name = self.config.get("save_model_name", "model")
 
+        self.experiment_dir = self.config.get("self.experiment_dir", "")
+        load_experiment_dir = len(self.experiment_dir) > 0
+        # Update load_model_path to find the model file dynamically
+        
+
         self.load_model_path = self.config.get("load_model_path", "")
-        self.checkpoint_file = self.config.get("checkpoint_file", "")
+        
+        model_dir = os.path.join(self.experiment_dir, "model")
+        model_files = []
+        if os.path.exists(model_dir):
+            model_files = [f for f in os.listdir(model_dir) if f.endswith('.pth')]
+
+        self.load_model_path = os.path.join(model_dir, model_files[0]) if len(model_files) > 0 and load_experiment_dir else ""   
+        
+        self.checkpoint_file = self.config.get("checkpoint_file", "") 
+        self.checkpoint_file = self.experiment_dir + 'stats.csv' if len(self.checkpoint_file) == 0 and len(self.experiment_dir) > 0 else ""
+
     def default(self):
         return self.__dict__

@@ -23,7 +23,7 @@ def main():
     test_data = DspritesDataset("./data/2d/test.npz", single_output=single_output)
 
     # Choose the correct data loader function
-    if args.model_name == "maga":
+    if  "maga" in args.model_name:
         train_loader, test_loader = get_dataloaders_2element(
             train_data, test_data,
             batch_size=args.batch_size

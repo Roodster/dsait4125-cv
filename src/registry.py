@@ -1,12 +1,19 @@
 import torch as th 
 
-from src.networks import VisionModel, MAGANet, VAE
+from src.networks import VisionModel, MAGANet, VAE, AblationMAGANet
 from src.learners import ClassificationLearner, MAGALearner, VAELearner
 from src.losses import MAGALoss, VAELoss
 
 REGISTRY = {
     'maga': {
         'model': MAGANet,
+        'learner': MAGALearner,
+        'optimizer': th.optim.Adam,
+        'criterion': MAGALoss
+    },
+    'maga-abl':
+    {
+        'model': AblationMAGANet,
         'learner': MAGALearner,
         'optimizer': th.optim.Adam,
         'criterion': MAGALoss
