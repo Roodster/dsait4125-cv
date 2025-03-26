@@ -86,8 +86,8 @@ def prepare_2d_data_2range(file_path):
 
     ## Save the split datasets
     os.makedirs(root, exist_ok=True)
-    np.savez(root / "train2range.npz", imgs=images[~mask], pivot_image=pivot_image[~mask], latents_values=values[~mask])
-    np.savez(root / "test2range.npz", imgs=images[mask], pivot_image=pivot_image[mask], latents_values=values[mask])
+    np.savez(root / "train2range.npz", imgs=images[~mask], pivot_image=p_img, latents_values=values[~mask])
+    np.savez(root / "test2range.npz", imgs=images[mask], pivot_image=p_img, latents_values=values[mask])
     print("saved files")
 
 
