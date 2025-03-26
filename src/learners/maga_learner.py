@@ -38,12 +38,8 @@ class MAGALearner(BaseLearner):
             z, mu1, logvar1, mu2, logvar2, decoded_x2 = self.model(x1, x2)      
             z_recon = self.model.compute_z_reconstruction(x1, decoded_x2)
             loss, recon_loss, recon_latent_loss, kl_loss = self.compute_loss(x2, z, mu1, logvar1, mu2, logvar2, decoded_x2, z_recon)    
-            print(f"loss: {loss} recon: {recon_loss} recon_latent: {recon_latent_loss} kl_loss: {kl_loss}")
             
             self.update(loss=loss)
-
-            print("loss: ", loss)
-            print("loss item: ", loss.item())
 
             train_loss += loss.item()
             train_loss_recon += recon_loss.item()

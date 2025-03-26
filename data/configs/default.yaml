@@ -24,7 +24,7 @@ test_ratio: 0.3
 device: cuda
 batch_size: 64
 learning_rate: 0.0005
-n_epochs: 60
+n_epochs: 34
 
 eval_save_model_interval: 1
 eval_interval: 1
@@ -33,6 +33,6 @@ save_model_name: model_2element
 save_all_models: false
 
 
-experiment_dir: "./outputs/run_prod_maga/seed_2_250320251444"
+experiment_dir: "./outputs/run_prod_maga/seed_2_260320251545"
 load_model_path: ""
 checkpoint_file: ""
