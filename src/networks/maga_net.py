@@ -209,7 +209,6 @@ class MAGANet(nn.Module):
     def encode(self, x1, x2):
         z, mu1, logvar1, mu2, logvar2 = self.encoder(x1, x2)
 
-    
     def decode(self, x1, z):
         return self.decoder(z, x1)
 

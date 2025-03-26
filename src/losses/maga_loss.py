@@ -9,6 +9,9 @@ class MAGALoss(nn.Module):
         self.beta_kl = args.beta_kl
         self.beta_recon = args.beta_recon
         self.batch_size = args.batch_size
+        self.epsilon = 1e-8
+
+
         
 
     def forward(self, x2, z, mu1, logvar1, mu2, logvar2, decoded_x2, z_recon):
@@ -20,11 +23,8 @@ class MAGALoss(nn.Module):
         # KL-divergence for regularization
         mu_z = mu2 - mu1
         var_z = th.exp(logvar1) + th.exp(logvar2)
-        logvar_z = th.log(var_z)
+        logvar_z = th.log(var_z + self.epsilon)
         kl_loss = -0.5 * th.sum(1+logvar_z - mu_z.pow(2) - var_z, dim=[1])
-
-        # kl_loss = (-0.5 * th.sum(1 + logvar1 - mu1.pow(2) - logvar1.exp())
-        #            -0.5 * th.sum(1 + logvar2 - mu2.pow(2) - logvar2.exp()))
                 
         recon_latent_loss = nn.functional.l1_loss(z_recon, z, reduction='none')
         recon_latent_loss = recon_latent_loss.sum(dim=[1])
