@@ -24,8 +24,8 @@ def main():
 
     # load dataset
     # dataset = SyntheticDataset(num_classes=2, n_samples_per_class=128, x_dim=3, y_dim=64, z_dim=64)
-    train_data = DspritesDataset("./data/2d/train.npz")
-    test_data = DspritesDataset("./data/2d/test.npz")
+    train_data = DspritesDataset("./data/2d/train.npz",single_output=False)
+    test_data = DspritesDataset("./data/2d/test.npz",single_output=False)
     train_loader, test_loader = get_dataloaders_2element(train_data, test_data,
                                                 batch_size=args.batch_size)
 
@@ -46,7 +46,7 @@ def main():
     # model.load_state_dict(torch.load(
     #     "./outputs/run_dev_maga/seed_42_170320252217/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 0
     model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_42_190320252041/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 3
+        "./outputs/run_dev_maga/seed_2_250320252002/models/model_2element.pth"))  # 2element k = 3
     model = model.to(args.device)
     model.eval()  # Set model to evaluation mode
 
