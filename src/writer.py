@@ -32,6 +32,9 @@ class Writer():
         self._create_directories(self.eval_dir)
         self._create_directories(self.model_dir)
 
+        self.save_all_models = args.save_all_models
+        self.save_epoch = 0
+
     def _create_directories(self, path):
         do_exist = os.path.exists(path)
         if not do_exist:
@@ -41,7 +44,8 @@ class Writer():
     def save_model(self, model, epoch):
         _dir = os.path.join(self.model_dir)
         # _name = self.args.save_model_name
-        file = f"/{self.args.save_model_name}.pth"
+        postfix = f"_epoch_{self.save_epoch}" if self.save_all_models else f""
+        file = f"/{self.args.save_model_name}{postfix}.pth"
 
         full_path = _dir + file
         th.save(model.state_dict(), full_path)

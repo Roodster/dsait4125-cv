@@ -20,11 +20,9 @@ class MAGALoss(nn.Module):
         # KL-divergence for regularization
         mu_z = mu2 - mu1
         var_z = th.exp(logvar1) + th.exp(logvar2)
+        var_z = th.clip(var_z, -2, 20)
         logvar_z = th.log(var_z)
         kl_loss = -0.5 * th.sum(1+logvar_z - mu_z.pow(2) - var_z, dim=[1])
-
-        # kl_loss = (-0.5 * th.sum(1 + logvar1 - mu1.pow(2) - logvar1.exp())
-        #            -0.5 * th.sum(1 + logvar2 - mu2.pow(2) - logvar2.exp()))
                 
         recon_latent_loss = nn.functional.l1_loss(z_recon, z, reduction='none')
         recon_latent_loss = recon_latent_loss.sum(dim=[1])

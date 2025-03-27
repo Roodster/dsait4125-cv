@@ -6,7 +6,7 @@ log_dir: ./outputs
 
 # ===== EXPERIMENT ====
 model_name: maga
-seed: 3
+seed: 2
 mode: train
 
 # ===== MODEL PARAMETERS =====
@@ -30,6 +30,7 @@ eval_save_model_interval: 1
 eval_interval: 1
 
 save_model_name: model_2element
+save_all_models: false
 
 
 experiment_dir: ""

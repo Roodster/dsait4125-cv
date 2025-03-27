@@ -70,7 +70,7 @@ class MAGALearner(BaseLearner):
                 x1, x2 = x1.to(self.args.device), x2.to(self.args.device)
                                 
                 z, mu1, logvar1, mu2, logvar2, decoded_x2 = self.model(x1, x2)      
-                z_recon, _, _, _, _, _ , _ = self.model(x1, decoded_x2)
+                z_recon, _, _, _, _, _ = self.model(x1, decoded_x2)
                 loss, recon_loss, recon_latent_loss, kl_loss = self.compute_loss(x2, z, mu1, logvar1, mu2, logvar2, decoded_x2, z_recon)                        
                 test_loss += loss.item()
                 test_loss_kl += kl_loss.item()
@@ -84,5 +84,5 @@ class MAGALearner(BaseLearner):
         metrics['test_kl_losses'] = test_loss_kl / N
         results.update(metrics)
         # metrics['generated_images'] = decoded_x1.cpu().detach().numpy()
-        results.generated_images = decoded_x1.cpu().detach().numpy().squeeze()
+        results.generated_images = decoded_x2.cpu().detach().numpy().squeeze()
         return results
