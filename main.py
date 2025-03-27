@@ -23,18 +23,10 @@ def main():
     test_data = DspritesDataset("./data/2d/test.npz", single_output=single_output)
 
     # Choose the correct data loader function
-    if  "maga" in args.model_name:
-        train_loader, test_loader = get_dataloaders_2element(
-            train_data, test_data,
-            batch_size=args.batch_size
-        )
-    elif args.model_name == "vae":
-        train_loader, test_loader, val_loader = get_dataloaders(
-            dataset=train_data + test_data  ,  # Only passing train_data here
-            train_ratio=args.train_ratio,
-            test_ratio=args.test_ratio,
-            batch_size=args.batch_size
-        )
+    train_loader, test_loader = get_dataloaders_2element(
+        train_data, test_data,
+        batch_size=args.batch_size
+    )
 
     # initialize experiment
     experiment = Experiment(registry=registry, 
