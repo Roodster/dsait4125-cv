@@ -10,7 +10,7 @@ class VAELoss(nn.Module):
     def forward(self, recon_x, x, mu, logvar):
 
         # Reconstruction loss (Binary Cross-Entropy)
-        recon_loss = F.binary_cross_entropy(recon_x, x, reduction='sum')
+        recon_loss = F.binary_cross_entropy(recon_x, x, reduction='none')
 
         # KL Divergence loss (Regularization term)
         kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
