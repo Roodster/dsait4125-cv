@@ -86,11 +86,12 @@ def prepare_2d_data_2range(file_path):
 
     ## Save the split datasets
     os.makedirs(root, exist_ok=True)
-    np.savez(root / "train2range.npz", imgs=images[~mask], pivot_image=pivot_image[~mask], latents_values=values[~mask])
-    np.savez(root / "test2range.npz", imgs=images[mask], pivot_image=pivot_image[mask], latents_values=values[mask])
+    np.savez(root / "train2range.npz", imgs=images[~mask], pivot_image=p_img, latents_values=values[~mask])
+    np.savez(root / "test2range.npz", imgs=images[mask], pivot_image=p_img, latents_values=values[mask])
     print("saved files")
 
 
 if __name__ == "__main__":
     root = pathlib.Path(__file__).parent.parent / "data" / "2d"
     prepare_2d_data(root / "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz")
+    prepare_2d_data_2range(root / "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz")
