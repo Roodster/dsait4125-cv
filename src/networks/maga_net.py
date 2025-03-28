@@ -223,6 +223,10 @@ class AblationMAGANet(MAGANet):
         self.decoder = FlowNet(in_channels=args.in_channels, latent_dim=args.latent_dim)
 
 
+    def decoder_(self, z, x1):
+        decoded_x2 = self.decoder(z, x1)
+        return decoded_x2
+
 def kl_divergence(mu, logvar):
     """ Compute KL divergence loss """
     return 0.5 * torch.sum(torch.exp(logvar) + mu**2 - 1 - logvar)
