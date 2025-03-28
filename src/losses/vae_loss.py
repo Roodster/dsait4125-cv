@@ -11,6 +11,7 @@ class VAELoss(nn.Module):
 
         # Reconstruction loss (Binary Cross-Entropy)
         recon_loss = F.binary_cross_entropy(recon_x, x, reduction='none')
+        recon_loss = recon_loss.sum(dim=[1,2,3])
 
         # KL Divergence loss (Regularization term)
         kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
@@ -18,4 +19,4 @@ class VAELoss(nn.Module):
         # Total loss (weighted KL divergence)
         total_loss = recon_loss + self.beta_kl * kl_loss
 
-        return total_loss.mean(), recon_loss.mean(), kl_loss.mean()
+        return total_loss.mean(), recon_loss.mean(dim=0), kl_loss.mean()
