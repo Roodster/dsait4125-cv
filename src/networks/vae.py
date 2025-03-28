@@ -68,11 +68,4 @@ class VAE(nn.Module):
 
 
 if __name__ == "__main__":
-    # Example forward pass
-    vae = VAE(latent_dim=10)
-    x = torch.randn(8, 1, 64, 64)  # Batch of 8 grayscale images
-    recon_x, mu, logvar = vae(x)
-
-    print(f"Input shape: {x.shape}")
-    print(f"Reconstructed shape: {recon_x.shape}")
-    print(f"Latent mean shape: {mu.shape}, logvar shape: {logvar.shape}")
+    pass

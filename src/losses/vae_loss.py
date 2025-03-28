@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class VAELoss(nn.Module):
     def __init__(self, args):
@@ -10,7 +9,7 @@ class VAELoss(nn.Module):
     def forward(self, recon_x, x, mu, logvar):
 
         # Reconstruction loss (Binary Cross-Entropy)
-        recon_loss = F.binary_cross_entropy(recon_x, x, reduction='none')
+        recon_loss = nn.functional.binary_cross_entropy(recon_x, x, reduction='none')
         recon_loss = recon_loss.sum(dim=[1,2,3])
 
         # KL Divergence loss (Regularization term)
