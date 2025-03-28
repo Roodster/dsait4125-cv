@@ -180,6 +180,10 @@ class MAGANet(nn.Module):
         z_recon, mu1, logvar1, mu_rec, logvar_rec = self.encoder(x1, decoded_x2)
         return z_recon
 
+    def decoder_(self, z, x1):
+        decoded_x2 = self.decoder(z, x1)
+        return decoded_x2
+
 def kl_divergence(mu, logvar):
     """ Compute KL divergence loss """
     return 0.5 * torch.sum(torch.exp(logvar) + mu**2 - 1 - logvar)

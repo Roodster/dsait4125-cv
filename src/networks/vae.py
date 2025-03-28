@@ -66,6 +66,11 @@ class VAE(nn.Module):
         x = self.decoder(x)  # Decode back to original space
         return x, mu, logvar  # Return reconstructed image and latent parameters
 
+    def decoder_(self, z):
+        x = self.decoder_fc(z).view(-1, 256, 4, 4)  # Reshape FC output into feature map
+        x = self.decoder(x)  # Decode back to original space
+        return x  # Return reconstructed image and latent parameters
+
 
 if __name__ == "__main__":
     # Example forward pass
