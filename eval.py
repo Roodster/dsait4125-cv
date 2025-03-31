@@ -13,7 +13,9 @@ from src.dataset import get_dataloaders,  DspritesDataset, get_dataloaders_2elem
 from src.experiment import Experiment
 from src.common.utils import set_seed
 from src.networks.maga_net import MAGANet, kl_divergence, latent_reconstruction_loss
+from src.networks.vae import VAE
 from src.losses import MAGALoss
+from src.losses import VAELoss
 
 def main():
         
@@ -30,7 +32,8 @@ def main():
                                                 batch_size=args.batch_size)
 
 
-    model = MAGANet(args)  # Reinitialize model
+    # model = MAGANet(args)  # Reinitialize model
+    model = VAE(args)
     # model.load_state_dict(torch.load(
     #   "./outputs/run_dev_maga/seed_42_100320251508/run_dev_maga/seed_42/models/model2range.pth"))  # 2range except square
     # model.load_state_dict(torch.load(
@@ -46,12 +49,13 @@ def main():
     # model.load_state_dict(torch.load(
     #     "./outputs/run_dev_maga/seed_42_170320252217/run_dev_maga/seed_42/models/model_2element.pth"))  # 2element k = 0
     model.load_state_dict(torch.load(
-        "./outputs/run_dev_maga/seed_2_250320252002/models/model_2element.pth"))  # 2element k = 3
+        "./outputs/run_prod_vae/seed_3/models/model_2element.pth"))  # 2element k = 3
     model = model.to(args.device)
     model.eval()  # Set model to evaluation mode
 
-    loss_fn = MAGALoss(args)
+    loss_fn = VAELoss(args)
     running_loss = 0.0
+    running_bce = 0.0
     print("start testing...")
     generated_image = None
     x1_sample = None  # Store x1 for visualization
@@ -59,18 +63,21 @@ def main():
     for batch_idx, (x1, x2) in enumerate(test_loader):
         x1, x2 = x1.to(args.device), x2.to(args.device)  # Move tensors to GPU if available
 
-        z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
-        z_recon = model.compute_z_reconstruction(x1, decoded_x1)
-        loss,_,_,_ = loss_fn(x2, z, mu1, logvar1, mu2, logvar2, decoded_x2, z_recon)
+        # z, mu1, logvar1, mu2, logvar2, decoded_x1, decoded_x2  = model(x1, x2)  # Forward pass
+        # z_recon = model.compute_z_reconstruction(x1, decoded_x1)
+        # loss,_,_,_ = loss_fn(x2, z, mu1, logvar1, mu2, logvar2, decoded_x2, z_recon)
 
+        decoded_x2, mu, logvar = model(x2)
+        loss, loss_recon, _ = loss_fn(decoded_x2, x2, mu, logvar)
         running_loss += loss.item()
-
+        running_bce += loss_recon.item()
         if batch_idx == 18:
-            generated_image = decoded_x1.cpu().detach().numpy().squeeze()
+            generated_image = decoded_x2.cpu().detach().numpy().squeeze()
             x1_sample = x1.cpu().detach().numpy().squeeze()
             x2_sample = x2.cpu().detach().numpy().squeeze()
     avg_loss = running_loss / len(test_loader)
-    print(f"Test average loss: {avg_loss}")
+    avg_bce = running_bce / len(test_loader)
+    print(f"Test average loss: {avg_loss}, Reconstruction loss: {avg_bce}")
 
     # Display the generated image
     if generated_image is not None:
