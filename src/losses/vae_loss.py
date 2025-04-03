@@ -13,7 +13,7 @@ class VAELoss(nn.Module):
         recon_loss = recon_loss.sum(dim=[1,2,3])
 
         # KL Divergence loss (Regularization term)
-        kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+        kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
 
         # Total loss (weighted KL divergence)
         total_loss = recon_loss + self.beta_kl * kl_loss
