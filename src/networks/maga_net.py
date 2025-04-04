@@ -209,7 +209,6 @@ class MAGANet(nn.Module):
     def encode(self, x1, x2):
         z, mu1, logvar1, mu2, logvar2 = self.encoder(x1, x2)
 
-    
     def decode(self, x1, z):
         return self.decoder(z, x1)
 
@@ -223,6 +222,14 @@ class AblationMAGANet(MAGANet):
         self.encoder = AblationEncoder(latent_dim=args.latent_dim, in_channels=args.in_channels)
         self.decoder = FlowNet(in_channels=args.in_channels, latent_dim=args.latent_dim)
 
+
+    def decoder_(self, z, x1):
+        decoded_x2 = self.decoder(z, x1)
+        return decoded_x2
+
+    def decoder_(self, z, x1):
+        decoded_x2 = self.decoder(z, x1)
+        return decoded_x2
 
 def kl_divergence(mu, logvar):
     """ Compute KL divergence loss """

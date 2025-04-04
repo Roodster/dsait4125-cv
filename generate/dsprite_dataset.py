@@ -80,7 +80,7 @@ def prepare_2d_data_2range(file_path):
     # Define the mask for exclusion
     # shape: square1, ellipse2, heart3
     mask = (
-            (shape_ == 1.) &
+            (shape_ == 2.) &
             (position_x > 0.5)
     )
 
@@ -93,5 +93,4 @@ def prepare_2d_data_2range(file_path):
 
 if __name__ == "__main__":
     root = pathlib.Path(__file__).parent.parent / "data" / "2d"
-    prepare_2d_data(root / "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz")
     prepare_2d_data_2range(root / "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.npz")
